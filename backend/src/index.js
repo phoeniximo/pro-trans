@@ -1,9 +1,16 @@
 // backend/index.js
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
-const authRoutes = require('./routes/authRoutes');
+const connectDB = require('./src/config/database');
+
+// Import des routes
+const authRoutes = require('./src/routes/authRoutes');
+const annonceRoutes = require('./src/routes/annonceRoutes');
+const userRoutes = require('./src/routes/userRoutes');
+const messageRoutes = require('./src/routes/messageRoutes');
+const devisRoutes = require('./src/routes/devisRoutes');
+const avisRoutes = require('./src/routes/avisRoutes');
 
 // Configuration Express
 const app = express();
@@ -11,26 +18,35 @@ const app = express();
 // Middlewares
 app.use(express.json());
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Connexion MongoDB
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => console.log('✅ Connecté à MongoDB'))
-.catch(err => console.error('❌ Erreur MongoDB:', err));
+// Connexion à MongoDB
+connectDB();
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/annonces', annonceRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/devis', devisRoutes);
+app.use('/api/avis', avisRoutes);
 
-// Gestion des erreurs
+// Route racine
+app.get('/', (req, res) => {
+  res.send('API Pro-Trans fonctionnelle');
+});
+
+// Middleware de gestion des erreurs
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ message: 'Erreur serveur' });
+  res.status(500).json({ 
+    success: false,
+    message: 'Erreur serveur',
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
 });
 
 // Démarrage serveur

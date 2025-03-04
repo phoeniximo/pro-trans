@@ -1,32 +1,86 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Provider } from 'react-redux';
-import { store } from './store/store';
-import PublicLayout from './layouts/PublicLayout';
-import PrivateLayout from './layouts/PrivateLayout';
-import Home from './features/Home';
-import Login from './features/auth/Login';
-import Register from './features/auth/Register';
-import Dashboard from './features/Dashboard';
-import CreateAnnonce from './features/annonces/CreateAnnonce';
+import React, { useEffect } from 'react';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from './hooks/useAuth';
+import { routes } from './routes';
+import MainLayout from './layouts/MainLayout';
+import AuthLayout from './layouts/AuthLayout';
+import DashboardLayout from './layouts/DashboardLayout';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import NotFound from './pages/NotFound';
 
 function App() {
-  return (
-    <Provider store={store}>
-      <Router>
-        <Routes>
-          <Route element={<PublicLayout />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-          </Route>
+  const { isAuthenticated, user, loading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-          <Route element={<PrivateLayout />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/create-annonce" element={<CreateAnnonce />} />
-          </Route>
-        </Routes>
-      </Router>
-    </Provider>
+  // Gestion de la redirection automatique en fonction de l'authentification
+  useEffect(() => {
+    // Si l'utilisateur est sur une page d'authentification mais est déjà connecté
+    if (!loading && isAuthenticated && 
+        (location.pathname === '/login' || 
+         location.pathname === '/register' || 
+         location.pathname === '/')) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, loading, navigate, location.pathname]);
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-teal-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <Routes>
+      {/* Routes publiques avec MainLayout */}
+      <Route element={<MainLayout />}>
+        {routes.public.map((route) => (
+          <Route
+            key={route.path}
+            path={route.path}
+            element={route.element}
+            exact={route.exact}
+          />
+        ))}
+      </Route>
+
+      {/* Routes d'authentification avec AuthLayout */}
+      <Route element={<AuthLayout />}>
+        {routes.auth.map((route) => (
+          <Route
+            key={route.path}
+            path={route.path}
+            element={route.element}
+            exact={route.exact}
+          />
+        ))}
+      </Route>
+
+      {/* Routes protégées avec DashboardLayout */}
+      <Route element={<DashboardLayout />}>
+        {routes.protected.map((route) => (
+          <Route
+            key={route.path}
+            path={route.path}
+            element={
+              <ProtectedRoute 
+                isAuthenticated={isAuthenticated} 
+                roles={route.roles}
+                userRole={user?.role}
+              >
+                {route.element}
+              </ProtectedRoute>
+            }
+            exact={route.exact}
+          />
+        ))}
+      </Route>
+
+      {/* Route pour la page 404 */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }
 
