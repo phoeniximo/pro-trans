@@ -1,16 +1,20 @@
-// backend/index.js
+// backend/src/index.js
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const connectDB = require('./src/config/database');
+const connectDB = require('./config/database');
 
 // Import des routes
-const authRoutes = require('./src/routes/authRoutes');
-const annonceRoutes = require('./src/routes/annonceRoutes');
-const userRoutes = require('./src/routes/userRoutes');
-const messageRoutes = require('./src/routes/messageRoutes');
-const devisRoutes = require('./src/routes/devisRoutes');
-const avisRoutes = require('./src/routes/avisRoutes');
+const authRoutes = require('./routes/authRoutes');
+const annonceRoutes = require('./routes/annonceRoutes');
+const userRoutes = require('./routes/userRoutes');
+const messageRoutes = require('./routes/messageRoutes');
+const devisRoutes = require('./routes/devisRoutes');
+const avisRoutes = require('./routes/avisRoutes');
+const trackingRoutes = require('./routes/trackingRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 // Configuration Express
 const app = express();
@@ -19,7 +23,7 @@ const app = express();
 app.use(express.json());
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
@@ -33,6 +37,10 @@ app.use('/api/users', userRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/devis', devisRoutes);
 app.use('/api/avis', avisRoutes);
+app.use('/api/tracking', trackingRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Route racine
 app.get('/', (req, res) => {
