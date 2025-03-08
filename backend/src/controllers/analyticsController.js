@@ -597,3 +597,104 @@ exports.getPerformanceAnalytics = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la génération des statistiques',
+      error: err.message
+    });
+  }
+};
+
+// @desc    Obtenir l'historique des transports
+// @route   GET /api/analytics/historique
+// @access  Privé
+exports.getHistoriqueTransports = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Filtre selon le rôle de l'utilisateur
+    let filter = {};
+    if (req.user.role === 'client') {
+      filter = { utilisateur: userId, statut: { $in: ['en_cours', 'termine'] } };
+    } else if (req.user.role === 'transporteur') {
+      const devis = await Devis.find({ 
+        transporteur: userId, 
+        statut: { $in: ['accepte', 'termine'] } 
+      });
+      
+      const annonceIds = devis.map(d => d.annonce);
+      filter = { _id: { $in: annonceIds } };
+    } else {
+      return res.status(403).json({
+        success: false,
+        message: 'Accès non autorisé'
+      });
+    }
+    
+    // Récupérer les annonces avec leur historique de tracking
+    const annonces = await Annonce.find(filter)
+      .populate({
+        path: 'utilisateur',
+        select: 'prenom nom email'
+      })
+      .sort({ updatedAt: -1 });
+    
+    // Pour chaque annonce, récupérer le devis associé
+    const historique = await Promise.all(annonces.map(async (annonce) => {
+      let devis;
+      
+      if (req.user.role === 'client') {
+        devis = await Devis.findOne({ 
+          annonce: annonce._id, 
+          statut: { $in: ['accepte', 'termine'] } 
+        }).populate({
+          path: 'transporteur',
+          select: 'prenom nom email'
+        });
+      } else {
+        devis = await Devis.findOne({ 
+          annonce: annonce._id, 
+          transporteur: userId
+        });
+      }
+      
+      if (!devis) return null;
+      
+      return {
+        id: annonce._id,
+        titre: annonce.titre,
+        statut: annonce.statut,
+        dateCreation: annonce.createdAt,
+        dateDepart: annonce.dateDepart,
+        villeDepart: annonce.villeDepart,
+        villeArrivee: annonce.villeArrivee,
+        typeTransport: annonce.typeTransport,
+        tracking: annonce.tracking || null,
+        client: {
+          id: annonce.utilisateur._id,
+          nom: `${annonce.utilisateur.prenom} ${annonce.utilisateur.nom}`,
+          email: annonce.utilisateur.email
+        },
+        transporteur: devis.transporteur ? {
+          id: devis.transporteur._id,
+          nom: `${devis.transporteur.prenom} ${devis.transporteur.nom}`,
+          email: devis.transporteur.email
+        } : null,
+        montant: devis.montant,
+        dateAcceptation: devis.dateAcceptation
+      };
+    }));
+    
+    // Filtrer les nulls (cas où aucun devis n'a été trouvé)
+    const historiqueFiltered = historique.filter(Boolean);
+    
+    res.json({
+      success: true,
+      data: historiqueFiltered
+    });
+  } catch (err) {
+    console.error('Erreur lors de la récupération de l\'historique des transports:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération de l\'historique',
+      error: err.message
+    });
+  }
+};

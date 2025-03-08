@@ -2,10 +2,10 @@
 const express = require('express');
 const router = express.Router();
 const avisController = require('../controllers/avisController');
-const auth = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
 
 // Protection de toutes les routes avec authentification
-router.use(auth);
+router.use(protect);
 
 // Création d'un avis
 router.post('/', avisController.createAvis);

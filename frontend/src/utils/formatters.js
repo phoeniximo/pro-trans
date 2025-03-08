@@ -1,5 +1,5 @@
 // frontend/src/utils/formatters.js
-import { format, parseISO, formatDistance, formatDistanceToNow } from 'date-fns';
+import { format, parseISO, formatDistance as dateFnsFormatDistance, formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 /**
@@ -100,7 +100,7 @@ export const formatPhoneNumber = (phone) => {
  * @param {number} distance - Distance en kilomètres
  * @returns {string} - Distance formatée
  */
-export const formatDistance = (distance) => {
+export const formatDistanceKm = (distance) => {
   if (distance === undefined || distance === null) return '';
   
   if (distance < 1) {

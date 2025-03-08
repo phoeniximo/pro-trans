@@ -76,4 +76,7 @@ exports.restrictTo = (...roles) => {
 };
 
 // Pour compatibilité avec l'ancien middleware
-module.exports = exports.protect;
+module.exports = {
+  protect: exports.protect,
+  restrictTo: exports.restrictTo
+};

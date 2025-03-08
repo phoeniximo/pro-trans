@@ -7,6 +7,7 @@ import {
   CurrencyEuroIcon,
   MagnifyingGlassIcon
 } from '@heroicons/react/24/outline';
+import { StarIcon } from '@heroicons/react/24/solid';
 import Button from '../../components/ui/Button';
 
 const HomePage = () => {
@@ -21,7 +22,7 @@ const HomePage = () => {
               Transport de marchandises facile et fiable
             </h1>
             <p className="mt-6 text-xl text-white">
-              Trouvez des transporteurs professionnels près de chez vous. Economisez jusqu'à 40% sur vos frais de transport.
+              Trouvez des transporteurs professionnels près de chez vous. Economisez jusqu&apos;à 40% sur vos frais de transport.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
               <Button
@@ -71,7 +72,7 @@ const HomePage = () => {
               </div>
               <input
                 type="text"
-                placeholder="Ville d'arrivée"
+                placeholder="Ville d&apos;arrivée"
                 className="pl-10 focus:ring-teal-500 focus:border-teal-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
               />
             </div>
@@ -123,7 +124,7 @@ const HomePage = () => {
                   </div>
                   <h3 className="mt-6 text-xl font-medium text-gray-900">Publiez votre annonce</h3>
                   <p className="mt-2 text-base text-gray-600">
-                    Décrivez ce que vous souhaitez transporter, d'où à où, et quand.
+                    Décrivez ce que vous souhaitez transporter, d&apos;où à où, et quand.
                   </p>
                 </div>
               </div>
@@ -201,7 +202,7 @@ const HomePage = () => {
                 </div>
                 <h3 className="mt-6 text-lg font-medium text-gray-900">Economies</h3>
                 <p className="mt-2 text-base text-gray-600">
-                  Comparez les offres et économisez jusqu'à 40% sur vos frais de transport.
+                  Comparez les offres et économisez jusqu&apos;à 40% sur vos frais de transport.
                 </p>
               </div>
 
@@ -355,7 +356,7 @@ const HomePage = () => {
                   </div>
                 </div>
                 <p className="text-gray-600 italic">
-                  "J'ai trouvé un transporteur pour mon canapé en moins de 2 heures ! Le prix était bien inférieur à ce que m'avaient proposé les enseignes traditionnelles."
+                  {`J&apos;ai trouvé un transporteur pour mon canapé en moins de 2 heures ! Le prix était bien inférieur à ce que m&apos;avaient proposé les enseignes traditionnelles.`}
                 </p>
               </div>
 
@@ -377,7 +378,7 @@ const HomePage = () => {
                   </div>
                 </div>
                 <p className="text-gray-600 italic">
-                  "En tant que transporteur, Pro-Trans m'a permis de trouver facilement des clients et d'optimiser mes trajets. Une excellente plateforme pour développer mon activité."
+                  {`En tant que transporteur, Pro-Trans m&apos;a permis de trouver facilement des clients et d&apos;optimiser mes trajets. Une excellente plateforme pour développer mon activité.`}
                 </p>
               </div>
 
@@ -399,7 +400,7 @@ const HomePage = () => {
                   </div>
                 </div>
                 <p className="text-gray-600 italic">
-                  "Mon déménagement s'est déroulé parfaitement grâce à Pro-Trans. J'ai pu suivre mon mobilier en temps réel et le transporteur était très professionnel. Je recommande !"
+                  {`Mon déménagement s&apos;est déroulé parfaitement grâce à Pro-Trans. J&apos;ai pu suivre mon mobilier en temps réel et le transporteur était très professionnel. Je recommande !`}
                 </p>
               </div>
             </div>
@@ -412,7 +413,7 @@ const HomePage = () => {
         <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 lg:flex lg:items-center lg:justify-between">
           <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             <span className="block">Prêt à simplifier vos transports ?</span>
-            <span className="block text-teal-300">Rejoignez Pro-Trans aujourd'hui.</span>
+            <span className="block text-teal-300">Rejoignez Pro-Trans aujourd&apos;hui.</span>
           </h2>
           <div className="mt-8 flex lg:mt-0 lg:flex-shrink-0">
             <div className="inline-flex rounded-md shadow">
@@ -422,7 +423,7 @@ const HomePage = () => {
                 size="lg"
                 className="bg-white text-teal-600 hover:bg-gray-100"
               >
-                S'inscrire gratuitement
+                S&apos;inscrire gratuitement
               </Button>
             </div>
             <div className="ml-3 inline-flex rounded-md shadow">

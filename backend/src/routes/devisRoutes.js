@@ -2,10 +2,10 @@
 const express = require('express');
 const router = express.Router();
 const devisController = require('../controllers/devisController');
-const auth = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
 
 // Toutes les routes nécessitent une authentification
-router.use(auth);
+router.use(protect);
 
 // Créer un nouveau devis (transporteur)
 router.post('/', devisController.createDevis);

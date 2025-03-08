@@ -1,6 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { TruckIcon, ClockIcon, ShieldCheckIcon, CurrencyEuroIcon } from '@heroicons/react/24/outline';
+import { 
+  TruckIcon, 
+  ClockIcon, 
+  ShieldCheckIcon, 
+  CurrencyEuroIcon 
+} from '@heroicons/react/24/outline';
+import { StarIcon } from '@heroicons/react/24/solid';
 import Button from '../../components/ui/Button';
 
 const HomePage = () => {
