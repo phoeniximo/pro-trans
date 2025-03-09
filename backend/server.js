@@ -8,6 +8,7 @@ const connectDB = require('./src/config/database');
 const logger = require('./src/utils/logger');
 const requestLogger = require('./src/middleware/requestLogger');
 const errorHandler = require('./src/middleware/errorHandler');
+const dashboardRoutes = require('./src/routes/dashboardRoutes');
 
 // Import des routes
 const authRoutes = require('./src/routes/authRoutes');
@@ -82,6 +83,7 @@ app.use('/api/tracking', trackingRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Route racine
 app.get('/', (req, res) => {
