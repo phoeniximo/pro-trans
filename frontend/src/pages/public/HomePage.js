@@ -22,7 +22,7 @@ const HomePage = () => {
               Transport de marchandises facile et fiable
             </h1>
             <p className="mt-6 text-xl text-white">
-              Trouvez des transporteurs professionnels près de chez vous. Economisez jusqu&apos;à 40% sur vos frais de transport.
+              Trouvez des transporteurs professionnels prÃ¨s de chez vous. Economisez jusqu'Ã  40% sur vos frais de transport.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
               <Button
@@ -59,7 +59,7 @@ const HomePage = () => {
               </div>
               <input
                 type="text"
-                placeholder="Ville de départ"
+                placeholder="Ville de dÃ©part"
                 className="pl-10 focus:ring-teal-500 focus:border-teal-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
               />
             </div>
@@ -72,7 +72,7 @@ const HomePage = () => {
               </div>
               <input
                 type="text"
-                placeholder="Ville d&apos;arrivée"
+                placeholder="Ville d'arrivÃ©e"
                 className="pl-10 focus:ring-teal-500 focus:border-teal-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
               />
             </div>
@@ -88,8 +88,8 @@ const HomePage = () => {
                 <option value="meuble">Meuble</option>
                 <option value="marchandise">Marchandise</option>
                 <option value="palette">Palette</option>
-                <option value="demenagement">Déménagement</option>
-                <option value="vehicule">Véhicule</option>
+                <option value="demenagement">DÃ©mÃ©nagement</option>
+                <option value="vehicule">VÃ©hicule</option>
               </select>
             </div>
             <div>
@@ -107,7 +107,7 @@ const HomePage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-              Comment ça marche ?
+              Comment Ã§a marche ?
             </h2>
             <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
               Pro-Trans simplifie le transport de vos biens en vous connectant directement aux transporteurs.
@@ -124,7 +124,7 @@ const HomePage = () => {
                   </div>
                   <h3 className="mt-6 text-xl font-medium text-gray-900">Publiez votre annonce</h3>
                   <p className="mt-2 text-base text-gray-600">
-                    Décrivez ce que vous souhaitez transporter, d&apos;où à où, et quand.
+                    DÃ©crivez ce que vous souhaitez transporter, d'oÃ¹ Ã  oÃ¹, et quand.
                   </p>
                 </div>
               </div>
@@ -137,7 +137,7 @@ const HomePage = () => {
                   </div>
                   <h3 className="mt-6 text-xl font-medium text-gray-900">Recevez des devis</h3>
                   <p className="mt-2 text-base text-gray-600">
-                    Les transporteurs vous envoient leurs propositions de prix et délais.
+                    Les transporteurs vous envoient leurs propositions de prix et dÃ©lais.
                   </p>
                 </div>
               </div>
@@ -178,9 +178,9 @@ const HomePage = () => {
                 <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-md bg-teal-500 text-white">
                   <TruckIcon className="h-6 w-6" aria-hidden="true" />
                 </div>
-                <h3 className="mt-6 text-lg font-medium text-gray-900">Réseau de confiance</h3>
+                <h3 className="mt-6 text-lg font-medium text-gray-900">RÃ©seau de confiance</h3>
                 <p className="mt-2 text-base text-gray-600">
-                  Transporteurs vérifiés et évalués par notre communauté.
+                  Transporteurs vÃ©rifiÃ©s et Ã©valuÃ©s par notre communautÃ©.
                 </p>
               </div>
 
@@ -189,7 +189,7 @@ const HomePage = () => {
                 <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-md bg-teal-500 text-white">
                   <ClockIcon className="h-6 w-6" aria-hidden="true" />
                 </div>
-                <h3 className="mt-6 text-lg font-medium text-gray-900">Rapidité</h3>
+                <h3 className="mt-6 text-lg font-medium text-gray-900">RapiditÃ©</h3>
                 <p className="mt-2 text-base text-gray-600">
                   Recevez des devis en quelques heures et organisez votre transport rapidement.
                 </p>
@@ -202,7 +202,7 @@ const HomePage = () => {
                 </div>
                 <h3 className="mt-6 text-lg font-medium text-gray-900">Economies</h3>
                 <p className="mt-2 text-base text-gray-600">
-                  Comparez les offres et économisez jusqu&apos;à 40% sur vos frais de transport.
+                  Comparez les offres et Ã©conomisez jusqu'Ã  40% sur vos frais de transport.
                 </p>
               </div>
 
@@ -211,9 +211,9 @@ const HomePage = () => {
                 <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-md bg-teal-500 text-white">
                   <ShieldCheckIcon className="h-6 w-6" aria-hidden="true" />
                 </div>
-                <h3 className="mt-6 text-lg font-medium text-gray-900">Sécurité</h3>
+                <h3 className="mt-6 text-lg font-medium text-gray-900">SÃ©curitÃ©</h3>
                 <p className="mt-2 text-base text-gray-600">
-                  Paiement sécurisé et assurance pour vos biens pendant le transport.
+                  Paiement sÃ©curisÃ© et assurance pour vos biens pendant le transport.
                 </p>
               </div>
             </div>
@@ -229,7 +229,7 @@ const HomePage = () => {
               Tous types de transport
             </h2>
             <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-              Que ce soit pour un petit colis ou un déménagement complet, trouvez le transporteur adapté à vos besoins.
+              Que ce soit pour un petit colis ou un dÃ©mÃ©nagement complet, trouvez le transporteur adaptÃ© Ã  vos besoins.
             </p>
           </div>
 
@@ -281,7 +281,7 @@ const HomePage = () => {
                       Transport de meubles
                     </Link>
                   </h3>
-                  <p className="text-base text-gray-600">Faites livrer vos meubles en toute sécurité.</p>
+                  <p className="text-base text-gray-600">Faites livrer vos meubles en toute sÃ©curitÃ©.</p>
                 </div>
               </div>
 
@@ -290,7 +290,7 @@ const HomePage = () => {
                 <div className="aspect-w-3 aspect-h-2 rounded-lg overflow-hidden bg-gray-100">
                   <img
                     src="/assets/images/demenagement.jpg"
-                    alt="Déménagement"
+                    alt="DÃ©mÃ©nagement"
                     className="object-center object-cover"
                   />
                   <div className="flex items-end p-4 opacity-0 group-hover:opacity-100" aria-hidden="true">
@@ -303,10 +303,10 @@ const HomePage = () => {
                   <h3 className="text-lg font-medium text-gray-900">
                     <Link to="/annonces?type=demenagement">
                       <span className="absolute inset-0" />
-                      Déménagement
+                      DÃ©mÃ©nagement
                     </Link>
                   </h3>
-                  <p className="text-base text-gray-600">Solutions complètes pour votre déménagement.</p>
+                  <p className="text-base text-gray-600">Solutions complÃ©tes pour votre dÃ©mÃ©nagement.</p>
                 </div>
               </div>
             </div>
@@ -332,7 +332,7 @@ const HomePage = () => {
               Ce que disent nos clients
             </h2>
             <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-              Découvrez les expériences de ceux qui ont déjà utilisé Pro-Trans pour leurs besoins de transport.
+              DÃ©couvrez les expÃ©riences de ceux qui ont dÃ©jÃ  utilisÃ© Pro-Trans pour leurs besoins de transport.
             </p>
           </div>
 
@@ -356,7 +356,7 @@ const HomePage = () => {
                   </div>
                 </div>
                 <p className="text-gray-600 italic">
-                  {`J&apos;ai trouvé un transporteur pour mon canapé en moins de 2 heures ! Le prix était bien inférieur à ce que m&apos;avaient proposé les enseignes traditionnelles.`}
+                  {`J'ai trouvÃ© un transporteur pour mon canapÃ© en moins de 2 heures ! Le prix Ã©tait bien infÃ©rieur Ã  ce que m'avaient proposÃ© les enseignes traditionnelles.`}
                 </p>
               </div>
 
@@ -378,7 +378,7 @@ const HomePage = () => {
                   </div>
                 </div>
                 <p className="text-gray-600 italic">
-                  {`En tant que transporteur, Pro-Trans m&apos;a permis de trouver facilement des clients et d&apos;optimiser mes trajets. Une excellente plateforme pour développer mon activité.`}
+                  {`En tant que transporteur, Pro-Trans m'a permis de trouver facilement des clients et d'optimiser mes trajets. Une excellente plateforme pour dÃ©velopper mon activitÃ©.`}
                 </p>
               </div>
 
@@ -400,7 +400,7 @@ const HomePage = () => {
                   </div>
                 </div>
                 <p className="text-gray-600 italic">
-                  {`Mon déménagement s&apos;est déroulé parfaitement grâce à Pro-Trans. J&apos;ai pu suivre mon mobilier en temps réel et le transporteur était très professionnel. Je recommande !`}
+                  {`Mon dÃ©mÃ©nagement s'est dÃ©roulÃ© parfaitement grÃ ce Ã  Pro-Trans. J'ai pu suivre mon mobilier en temps rÃ©el et le transporteur Ã©tait trÃ©s professionnel. Je recommande !`}
                 </p>
               </div>
             </div>
@@ -412,8 +412,8 @@ const HomePage = () => {
       <div className="bg-teal-700">
         <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 lg:flex lg:items-center lg:justify-between">
           <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-            <span className="block">Prêt à simplifier vos transports ?</span>
-            <span className="block text-teal-300">Rejoignez Pro-Trans aujourd&apos;hui.</span>
+            <span className="block">PrÃªt Ã  simplifier vos transports ?</span>
+            <span className="block text-teal-300">Rejoignez Pro-Trans aujourd'hui.</span>
           </h2>
           <div className="mt-8 flex lg:mt-0 lg:flex-shrink-0">
             <div className="inline-flex rounded-md shadow">
@@ -423,7 +423,7 @@ const HomePage = () => {
                 size="lg"
                 className="bg-white text-teal-600 hover:bg-gray-100"
               >
-                S&apos;inscrire gratuitement
+                S'inscrire gratuitement
               </Button>
             </div>
             <div className="ml-3 inline-flex rounded-md shadow">

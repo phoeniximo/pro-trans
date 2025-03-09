@@ -1,16 +1,19 @@
 import axios from 'axios';
 
-// Crée une instance Axios avec l'URL de base de l'API
+// Crée une instance Axios avec URL relative (fonctionne avec proxy)
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 15000,
+  withCredentials: true,
 });
 
 // Intercepteur pour ajouter le token d'authentification
 apiClient.interceptors.request.use(
   (config) => {
+    console.log(`Envoi de requête: ${config.url}`);
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -18,6 +21,7 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.error('Erreur de requête:', error);
     return Promise.reject(error);
   }
 );
@@ -25,19 +29,27 @@ apiClient.interceptors.request.use(
 // Intercepteur pour gérer les erreurs
 apiClient.interceptors.response.use(
   (response) => {
+    console.log(`Réponse de ${response.config.url}: succès`);
     return response;
   },
   (error) => {
-    // Gestion spécifique des erreurs 401 (non autorisé)
-    if (error.response && error.response.status === 401) {
-      // Supprime le token si la session est expirée
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+    if (error.response) {
+      console.error(`Erreur ${error.response.status} pour ${error.config.url}:`, 
+                    error.response.data);
       
-      // Redirige vers la page de connexion
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login?session=expired';
+      // Gestion des erreurs 401 (non autorisé)
+      if (error.response.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login?session=expired';
+        }
       }
+    } else if (error.request) {
+      console.error('Pas de réponse du serveur:', error.request);
+    } else {
+      console.error('Erreur:', error.message);
     }
     
     return Promise.reject(error);

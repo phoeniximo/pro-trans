@@ -28,13 +28,29 @@ const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Configuration CORS
+// Configuration CORS modifiée
+const allowedOrigins = ['http://localhost:3000', 'https://localhost:3001', 'http://localhost:3001'];
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: function(origin, callback) {
+    // Permettre les requêtes sans origine (comme les appels API depuis Postman)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log(`Origine bloquée par CORS: ${origin}`);
+      callback(null, false, new Error('Origine non autorisée par CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
+
+// Route de test pour vérifier la connexion API
+app.get('/api/test', (req, res) => {
+  res.json({ success: true, message: 'API accessible' });
+});
 
 // Middleware pour les uploads de fichiers
 app.use(fileUpload({
