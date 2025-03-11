@@ -40,14 +40,21 @@ const MesAvisPage = () => {
           response = await avisService.getAvisDonnes(page, limit);
         }
         
-        setAvis(response.data.data);
-        setTotalPages(response.data.pages);
-        setTotalAvis(response.data.total);
-        setError(null);
+        // V√©rifier si response.data existe et a la structure attendue
+        if (response && response.data) {
+          setAvis(response.data.data || []);
+          setTotalPages(response.data.pages || 1);
+          setTotalAvis(response.data.total || 0);
+          setError(null);
+        } else {
+          throw new Error('Format de r√©ponse inattendu');
+        }
       } catch (err) {
         console.error('Erreur lors du chargement des avis:', err);
         setError('Impossible de charger les avis');
         toast.error('Erreur lors du chargement des avis');
+        // S'assurer que l'√©tat des avis est toujours un tableau m√™me en cas d'erreur
+        setAvis([]);
       } finally {
         setLoading(false);
       }
@@ -59,7 +66,7 @@ const MesAvisPage = () => {
   // Changement d'onglet
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    setPage(1); // RÈinitialiser la pagination lors du changement d'onglet
+    setPage(1); // R√©initialiser la pagination lors du changement d'onglet
   };
 
   // Affichage du statut de l'avis
@@ -67,7 +74,7 @@ const MesAvisPage = () => {
     if (!avu.annonce) {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-          Annonce supprimÈe
+          Annonce supprim√©e
         </span>
       );
     }
@@ -82,6 +89,39 @@ const MesAvisPage = () => {
     );
   };
 
+  // Fonction pour rafra√Æchir les avis
+  const refreshAvis = async () => {
+    try {
+      setLoading(true);
+      let response;
+      
+      if (activeTab === 'recus') {
+        response = await avisService.getAvisRecus(1, limit);
+      } else {
+        response = await avisService.getAvisDonnes(1, limit);
+      }
+      
+      // V√©rifier si response.data existe et a la structure attendue
+      if (response && response.data) {
+        setAvis(response.data.data || []);
+        setTotalPages(response.data.pages || 1);
+        setTotalAvis(response.data.total || 0);
+        setError(null);
+        toast.success('Avis actualis√©s');
+      } else {
+        throw new Error('Format de r√©ponse inattendu');
+      }
+    } catch (err) {
+      console.error('Erreur lors du chargement des avis:', err);
+      setError('Impossible de charger les avis');
+      toast.error('Erreur lors du chargement des avis');
+      // S'assurer que l'√©tat des avis est toujours un tableau m√™me en cas d'erreur
+      setAvis([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="md:flex md:items-center md:justify-between mb-6">
@@ -90,7 +130,7 @@ const MesAvisPage = () => {
             Mes avis
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            GÈrez les avis que vous avez reÁus et donnÈs
+            G√©rez les avis que vous avez re√ßus et donn√©s
           </p>
         </div>
         <div className="mt-4 flex md:mt-0 md:ml-4">
@@ -98,31 +138,7 @@ const MesAvisPage = () => {
             variant="outline"
             onClick={() => {
               setPage(1);
-              const fetchAvis = async () => {
-                try {
-                  setLoading(true);
-                  let response;
-                  
-                  if (activeTab === 'recus') {
-                    response = await avisService.getAvisRecus(1, limit);
-                  } else {
-                    response = await avisService.getAvisDonnes(1, limit);
-                  }
-                  
-                  setAvis(response.data.data);
-                  setTotalPages(response.data.pages);
-                  setTotalAvis(response.data.total);
-                  setError(null);
-                  toast.success('Avis actualisÈs');
-                } catch (err) {
-                  console.error('Erreur lors du chargement des avis:', err);
-                  setError('Impossible de charger les avis');
-                  toast.error('Erreur lors du chargement des avis');
-                } finally {
-                  setLoading(false);
-                }
-              };
-              fetchAvis();
+              refreshAvis();
             }}
           >
             <ArrowPathIcon className="h-5 w-5 mr-1" />
@@ -142,7 +158,7 @@ const MesAvisPage = () => {
             }`}
             onClick={() => handleTabChange('recus')}
           >
-            Avis reÁus
+            Avis re√ßus
           </button>
           <button
             className={`mr-8 py-4 px-1 border-b-2 font-medium text-sm ${
@@ -152,7 +168,7 @@ const MesAvisPage = () => {
             }`}
             onClick={() => handleTabChange('donnes')}
           >
-            Avis donnÈs
+            Avis donn√©s
           </button>
         </nav>
       </div>
@@ -161,12 +177,12 @@ const MesAvisPage = () => {
       <div className="bg-white shadow overflow-hidden sm:rounded-lg">
         <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
           <h2 className="text-lg font-medium text-gray-900">
-            {activeTab === 'recus' ? 'Avis reÁus' : 'Avis donnÈs'}
+            {activeTab === 'recus' ? 'Avis re√ßus' : 'Avis donn√©s'}
           </h2>
           <p className="mt-1 text-sm text-gray-500">
             {activeTab === 'recus' 
-              ? `Avis laissÈs par vos clients (${totalAvis})`
-              : `Avis que vous avez laissÈs aux transporteurs (${totalAvis})`}
+              ? `Avis laiss√©s par vos clients (${totalAvis})`
+              : `Avis que vous avez laiss√©s aux transporteurs (${totalAvis})`}
           </p>
         </div>
 
@@ -186,33 +202,10 @@ const MesAvisPage = () => {
                 variant="outline"
                 onClick={() => {
                   setPage(1);
-                  const fetchAvis = async () => {
-                    try {
-                      setLoading(true);
-                      let response;
-                      
-                      if (activeTab === 'recus') {
-                        response = await avisService.getAvisRecus(1, limit);
-                      } else {
-                        response = await avisService.getAvisDonnes(1, limit);
-                      }
-                      
-                      setAvis(response.data.data);
-                      setTotalPages(response.data.pages);
-                      setTotalAvis(response.data.total);
-                      setError(null);
-                    } catch (err) {
-                      console.error('Erreur lors du chargement des avis:', err);
-                      setError('Impossible de charger les avis');
-                      toast.error('Erreur lors du chargement des avis');
-                    } finally {
-                      setLoading(false);
-                    }
-                  };
-                  fetchAvis();
+                  refreshAvis();
                 }}
               >
-                RÈessayer
+                R√©essayer
               </Button>
             </div>
           </div>
@@ -222,8 +215,8 @@ const MesAvisPage = () => {
             <h3 className="mt-2 text-sm font-medium text-gray-900">Aucun avis</h3>
             <p className="mt-1 text-sm text-gray-500">
               {activeTab === 'recus' 
-                ? "Vous n'avez pas encore reÁu d'avis"
-                : "Vous n'avez pas encore donnÈ d'avis"}
+                ? "Vous n'avez pas encore re√ßu d'avis"
+                : "Vous n'avez pas encore donn√© d'avis"}
             </p>
           </div>
         ) : (
@@ -232,7 +225,7 @@ const MesAvisPage = () => {
               <li key={avu._id} className="px-4 py-4 sm:px-6">
                 <div className="flex items-start">
                   <div className="flex-shrink-0 pt-1">
-                    {activeTab === 'recus' ? (
+                    {activeTab === 'recus' && avu.auteur ? (
                       <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
                         {avu.auteur.photo ? (
                           <img 
@@ -244,7 +237,7 @@ const MesAvisPage = () => {
                           <StarIcon className="h-6 w-6 text-gray-400" />
                         )}
                       </div>
-                    ) : (
+                    ) : avu.destinataire ? (
                       <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
                         {avu.destinataire.photo ? (
                           <img 
@@ -256,6 +249,10 @@ const MesAvisPage = () => {
                           <StarIcon className="h-6 w-6 text-gray-400" />
                         )}
                       </div>
+                    ) : (
+                      <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                        <StarIcon className="h-6 w-6 text-gray-400" />
+                      </div>
                     )}
                   </div>
                   
@@ -263,16 +260,18 @@ const MesAvisPage = () => {
                     <div className="flex justify-between">
                       <div>
                         <h4 className="text-sm font-medium text-gray-900">
-                          {activeTab === 'recus' 
-                            ? `${avu.auteur.prenom} ${avu.auteur.nom}`
-                            : `${avu.destinataire.prenom} ${avu.destinataire.nom}`}
+                          {activeTab === 'recus' && avu.auteur
+                            ? `${avu.auteur.prenom || ''} ${avu.auteur.nom || ''}`
+                            : avu.destinataire
+                              ? `${avu.destinataire.prenom || ''} ${avu.destinataire.nom || ''}`
+                              : 'Utilisateur inconnu'}
                         </h4>
                         <div className="mt-1 flex items-center">
                           <StarRating rating={avu.note} size="sm" />
                         </div>
                       </div>
                       <p className="text-sm text-gray-500">
-                        {formatDate(avu.createdAt, 'dd MMM yyyy')}
+                        {avu.createdAt ? formatDate(avu.createdAt, 'dd MMM yyyy') : 'Date inconnue'}
                       </p>
                     </div>
                     
@@ -310,7 +309,7 @@ const MesAvisPage = () => {
                         : 'text-gray-500 hover:bg-gray-50'
                     }`}
                   >
-                    <span className="sr-only">PrÈcÈdent</span>
+                    <span className="sr-only">Pr√©c√©dent</span>
                     <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
                   </button>
                   
@@ -373,31 +372,31 @@ const MesAvisPage = () => {
 
       {/* Importance des avis */}
       <div className="mt-8 bg-blue-50 rounded-lg p-6">
-        <h3 className="text-lg font-medium text-blue-800 mb-3">Importance des avis pour votre rÈputation</h3>
+        <h3 className="text-lg font-medium text-blue-800 mb-3">Importance des avis pour votre r√©putation</h3>
         <p className="text-blue-700 mb-4">
-          Les avis sont essentiels pour Ètablir votre rÈputation sur Pro-Trans. Ils aident les nouveaux clients ‡ faire confiance ‡ vos services et ‡ prendre une dÈcision ÈclairÈe.
+          Les avis sont essentiels pour √©tablir votre r√©putation sur Pro-Trans. Ils aident les nouveaux clients √† faire confiance √† vos services et √† prendre une d√©cision √©clair√©e.
         </p>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-white p-4 rounded-md shadow-sm">
-            <h4 className="font-medium text-blue-800 mb-2">Comment amÈliorer vos avis ?</h4>
+            <h4 className="font-medium text-blue-800 mb-2">Comment am√©liorer vos avis ?</h4>
             <ul className="list-disc pl-5 text-sm text-blue-700 space-y-1">
               <li>Communiquez clairement avec vos clients</li>
-              <li>Respectez les dÈlais convenus</li>
+              <li>Respectez les d√©lais convenus</li>
               <li>Soyez professionnel et courtois</li>
-              <li>Prenez soin des marchandises transportÈes</li>
-              <li>RÈsolvez rapidement les problËmes Èventuels</li>
+              <li>Prenez soin des marchandises transport√©es</li>
+              <li>R√©solvez rapidement les probl√®mes √©ventuels</li>
             </ul>
           </div>
           
           <div className="bg-white p-4 rounded-md shadow-sm">
-            <h4 className="font-medium text-blue-800 mb-2">Que faire en cas d'avis nÈgatif ?</h4>
+            <h4 className="font-medium text-blue-800 mb-2">Que faire en cas d'avis n√©gatif ?</h4>
             <ul className="list-disc pl-5 text-sm text-blue-700 space-y-1">
-              <li>Ne rÈagissez pas ‡ chaud</li>
+              <li>Ne r√©agissez pas √† chaud</li>
               <li>Contactez le client pour comprendre son insatisfaction</li>
-              <li>Proposez une solution concrËte au problËme signalÈ</li>
-              <li>Apprenez de cette expÈrience pour l'avenir</li>
-              <li>Contactez notre service client si vous estimez l'avis injustifiÈ</li>
+              <li>Proposez une solution concr√®te au probl√®me signal√©</li>
+              <li>Apprenez de cette exp√©rience pour l'avenir</li>
+              <li>Contactez notre service client si vous estimez l'avis injustifi√©</li>
             </ul>
           </div>
         </div>

@@ -30,21 +30,21 @@ const EditProfilePage = () => {
   const [specialites, setSpecialites] = useState([]);
   const [newSpecialite, setNewSpecialite] = useState('');
 
-  // SchÈma de validation pour l'information personnelle
+  // Sch√©ma de validation pour l'information personnelle
   const validationSchema = Yup.object({
     prenom: Yup.string()
-      .required('Le prÈnom est obligatoire')
-      .min(2, 'Le prÈnom doit comporter au moins 2 caractËres')
-      .max(50, 'Le prÈnom ne doit pas dÈpasser 50 caractËres'),
+      .required('Le pr√©nom est obligatoire')
+      .min(2, 'Le pr√©nom doit comporter au moins 2 caract√®res')
+      .max(50, 'Le pr√©nom ne doit pas d√©passer 50 caract√®res'),
     nom: Yup.string()
       .required('Le nom est obligatoire')
-      .min(2, 'Le nom doit comporter au moins 2 caractËres')
-      .max(50, 'Le nom ne doit pas dÈpasser 50 caractËres'),
+      .min(2, 'Le nom doit comporter au moins 2 caract√®res')
+      .max(50, 'Le nom ne doit pas d√©passer 50 caract√®res'),
     telephone: Yup.string()
-      .required('Le numÈro de tÈlÈphone est obligatoire')
+      .required('Le num√©ro de t√©l√©phone est obligatoire')
       .matches(
-        /^((\+)33|0)[1-9](\d{2}){4}$/,
-        'Le format du numÈro de tÈlÈphone est invalide (ex: 0612345678 ou +33612345678)'
+        /^((\+)?(212|0)[567]\d{8})$/,
+        'Le format du num√©ro de t√©l√©phone est invalide (ex: 0612345678 ou +212612345678)'
       ),
     'adresse.rue': Yup.string()
       .required('L\'adresse est obligatoire'),
@@ -56,16 +56,16 @@ const EditProfilePage = () => {
     'adresse.pays': Yup.string()
       .required('Le pays est obligatoire'),
     aboutMe: Yup.string()
-      .max(500, 'La description ne doit pas dÈpasser 500 caractËres')
+      .max(500, 'La description ne doit pas d√©passer 500 caract√®res')
   });
 
-  // SchÈma de validation pour le changement de mot de passe
+  // Sch√©ma de validation pour le changement de mot de passe
   const passwordValidationSchema = Yup.object({
     currentPassword: Yup.string()
       .required('Le mot de passe actuel est obligatoire'),
     newPassword: Yup.string()
       .required('Le nouveau mot de passe est obligatoire')
-      .min(8, 'Le mot de passe doit contenir au moins 8 caractËres')
+      .min(8, 'Le mot de passe doit contenir au moins 8 caract√®res')
       .matches(
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
         'Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre'
@@ -86,7 +86,7 @@ const EditProfilePage = () => {
         rue: user?.adresse?.rue || '',
         codePostal: user?.adresse?.codePostal || '',
         ville: user?.adresse?.ville || '',
-        pays: user?.adresse?.pays || 'France'
+        pays: user?.adresse?.pays || 'Maroc'
       },
       aboutMe: user?.aboutMe || '',
       disponibilite: user?.disponibilite || '',
@@ -98,14 +98,14 @@ const EditProfilePage = () => {
         setLoading(true);
         const response = await userService.updateProfile(values);
         
-        // Mettre ‡ jour le contexte d'authentification
+        // Mettre √† jour le contexte d'authentification
         updateUserProfile(response.data.data);
         
-        toast.success('Profil mis ‡ jour avec succËs');
+        toast.success('Profil mis √† jour avec succ√®s');
         navigate('/profile');
       } catch (error) {
-        console.error('Erreur lors de la mise ‡ jour du profil:', error);
-        toast.error(error.message || 'Erreur lors de la mise ‡ jour du profil');
+        console.error('Erreur lors de la mise √† jour du profil:', error);
+        toast.error(error.message || 'Erreur lors de la mise √† jour du profil');
       } finally {
         setLoading(false);
       }
@@ -129,18 +129,18 @@ const EditProfilePage = () => {
           passwordConfirm: values.confirmPassword
         });
         
-        toast.success('Mot de passe mis ‡ jour avec succËs');
+        toast.success('Mot de passe mis √† jour avec succ√®s');
         passwordFormik.resetForm();
       } catch (error) {
-        console.error('Erreur lors de la mise ‡ jour du mot de passe:', error);
-        toast.error(error.message || 'Erreur lors de la mise ‡ jour du mot de passe');
+        console.error('Erreur lors de la mise √† jour du mot de passe:', error);
+        toast.error(error.message || 'Erreur lors de la mise √† jour du mot de passe');
       } finally {
         setLoading(false);
       }
     }
   });
 
-  // Initialiser les spÈcialitÈs
+  // Initialiser les sp√©cialit√©s
   useEffect(() => {
     if (user && user.specialites) {
       setSpecialites(user.specialites);
@@ -159,11 +159,11 @@ const EditProfilePage = () => {
         const file = acceptedFiles[0];
         setProfilePhoto(file);
         
-        // CrÈer une URL pour prÈvisualiser l'image
+        // Cr√©er une URL pour pr√©visualiser l'image
         const previewUrl = URL.createObjectURL(file);
         formik.setFieldValue('photoPreview', previewUrl);
         
-        // Uploader la photo immÈdiatement
+        // Uploader la photo imm√©diatement
         await handlePhotoUpload(file);
       }
     },
@@ -173,7 +173,7 @@ const EditProfilePage = () => {
         if (errors.some(e => e.code === 'file-too-large')) {
           toast.error('L\'image est trop volumineuse. Taille maximale: 5MB');
         } else {
-          toast.error('Format de fichier non acceptÈ. Utilisez JPG, PNG ou GIF');
+          toast.error('Format de fichier non accept√©. Utilisez JPG, PNG ou GIF');
         }
       }
     }
@@ -189,7 +189,7 @@ const EditProfilePage = () => {
     },
     maxSize: 10485760, // 10MB
     onDrop: (acceptedFiles) => {
-      // Ajouter les nouveaux fichiers ‡ la liste existante
+      // Ajouter les nouveaux fichiers √† la liste existante
       const newDocuments = [...documents, ...acceptedFiles.map(file => ({
         file,
         preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
@@ -207,7 +207,7 @@ const EditProfilePage = () => {
         if (errors.some(e => e.code === 'file-too-large')) {
           toast.error('Le document est trop volumineux. Taille maximale: 10MB');
         } else {
-          toast.error('Format de fichier non acceptÈ. Utilisez PDF, JPG, PNG, DOC ou DOCX');
+          toast.error('Format de fichier non accept√©. Utilisez PDF, JPG, PNG, DOC ou DOCX');
         }
       }
     }
@@ -223,16 +223,16 @@ const EditProfilePage = () => {
       
       const response = await userService.uploadProfilePhoto(formData);
       
-      // Mettre ‡ jour le contexte d'authentification avec la nouvelle photo
+      // Mettre √† jour le contexte d'authentification avec la nouvelle photo
       updateUserProfile({
         ...user,
         photo: response.data.photo
       });
       
-      toast.success('Photo de profil mise ‡ jour avec succËs');
+      toast.success('Photo de profil mise √† jour avec succ√®s');
     } catch (error) {
-      console.error('Erreur lors du tÈlÈchargement de la photo:', error);
-      toast.error(error.message || 'Erreur lors du tÈlÈchargement de la photo');
+      console.error('Erreur lors du t√©l√©chargement de la photo:', error);
+      toast.error(error.message || 'Erreur lors du t√©l√©chargement de la photo');
     } finally {
       setUploadingPhoto(false);
     }
@@ -241,7 +241,7 @@ const EditProfilePage = () => {
   // Uploader les documents
   const handleDocumentsUpload = async () => {
     if (documents.length === 0) {
-      toast.error('Aucun document ‡ tÈlÈcharger');
+      toast.error('Aucun document √† t√©l√©charger');
       return;
     }
     
@@ -253,7 +253,7 @@ const EditProfilePage = () => {
         if (!doc.uploaded && !doc.uploading) {
           formData.append(`documents`, doc.file);
           
-          // Marquer le document comme en cours de tÈlÈchargement
+          // Marquer le document comme en cours de t√©l√©chargement
           setDocuments(prev => 
             prev.map((d, i) => 
               i === index ? { ...d, uploading: true } : d
@@ -264,7 +264,7 @@ const EditProfilePage = () => {
       
       const response = await userService.uploadDocuments(formData);
       
-      // Mettre ‡ jour le statut des documents
+      // Mettre √† jour le statut des documents
       setDocuments(prev => 
         prev.map(doc => {
           const uploadedDoc = response.data.documents.find(d => d.originalname === doc.name);
@@ -275,14 +275,14 @@ const EditProfilePage = () => {
         })
       );
       
-      toast.success('Documents tÈlÈchargÈs avec succËs');
+      toast.success('Documents t√©l√©charg√©s avec succ√®s');
     } catch (error) {
-      console.error('Erreur lors du tÈlÈchargement des documents:', error);
-      toast.error(error.message || 'Erreur lors du tÈlÈchargement des documents');
+      console.error('Erreur lors du t√©l√©chargement des documents:', error);
+      toast.error(error.message || 'Erreur lors du t√©l√©chargement des documents');
       
-      // RÈinitialiser le statut des documents en cours de tÈlÈchargement
+      // R√©initialiser le statut des documents en cours de t√©l√©chargement
       setDocuments(prev => 
-        prev.map(doc => doc.uploading ? { ...doc, uploading: false, error: 'Echec du tÈlÈchargement' } : doc)
+        prev.map(doc => doc.uploading ? { ...doc, uploading: false, error: 'Echec du t√©l√©chargement' } : doc)
       );
     } finally {
       setUploadingDocuments(false);
@@ -293,7 +293,7 @@ const EditProfilePage = () => {
   const removeDocument = (index) => {
     const doc = documents[index];
     
-    // Si le document a une prÈvisualisation, libÈrer la mÈmoire
+    // Si le document a une pr√©visualisation, lib√©rer la m√©moire
     if (doc.preview) {
       URL.revokeObjectURL(doc.preview);
     }
@@ -302,7 +302,7 @@ const EditProfilePage = () => {
     setDocuments(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Ajouter une spÈcialitÈ
+  // Ajouter une sp√©cialit√©
   const addSpecialite = () => {
     if (newSpecialite.trim() === '') return;
     
@@ -314,7 +314,7 @@ const EditProfilePage = () => {
     setNewSpecialite('');
   };
 
-  // Supprimer une spÈcialitÈ
+  // Supprimer une sp√©cialit√©
   const removeSpecialite = (index) => {
     const newSpecialites = [...specialites];
     newSpecialites.splice(index, 1);
@@ -322,22 +322,29 @@ const EditProfilePage = () => {
     formik.setFieldValue('specialites', newSpecialites);
   };
 
-  // Nettoyer les prÈvisualisations lors du dÈmontage du composant
+  // Nettoyer les pr√©visualisations lors du d√©montage du composant
   useEffect(() => {
     return () => {
-      // Nettoyer les prÈvisualisations de documents
+      // Nettoyer les pr√©visualisations de documents
       documents.forEach(doc => {
         if (doc.preview) {
           URL.revokeObjectURL(doc.preview);
         }
       });
       
-      // Nettoyer la prÈvisualisation de la photo de profil
+      // Nettoyer la pr√©visualisation de la photo de profil
       if (formik.values.photoPreview) {
         URL.revokeObjectURL(formik.values.photoPreview);
       }
     };
   }, [documents, formik.values.photoPreview]);
+
+  // Liste des villes marocaines principales
+  const villesMarocaines = [
+    'Casablanca', 'Rabat', 'F√®s', 'Tanger', 'Marrakech', 'Agadir', 'Mekn√®s', 'Oujda',
+    'K√©nitra', 'T√©touan', 'Sal√©', 'Nador', 'Mohammedia', 'El Jadida', 'B√©ni Mellal',
+    'Safi', 'Khouribga', 'Essaouira', 'Dakhla', 'La√¢youne', 'Ifrane', 'Chefchaouen'
+  ];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -389,7 +396,7 @@ const EditProfilePage = () => {
               }`}
               onClick={() => setActiveTab('documents')}
             >
-              Documents et vÈrification
+              Documents et v√©rification
             </button>
           )}
         </nav>
@@ -409,7 +416,7 @@ const EditProfilePage = () => {
                       {formik.values.photoPreview ? (
                         <img
                           src={formik.values.photoPreview}
-                          alt="PrÈvisualisation"
+                          alt="Pr√©visualisation"
                           className="h-full w-full object-cover"
                         />
                       ) : user?.photo ? (
@@ -429,7 +436,7 @@ const EditProfilePage = () => {
                         variant="outline"
                         disabled={uploadingPhoto}
                       >
-                        {uploadingPhoto ? 'TÈlÈchargement...' : 'Changer'}
+                        {uploadingPhoto ? 'T√©l√©chargement...' : 'Changer'}
                       </Button>
                     </div>
                   </div>
@@ -438,13 +445,13 @@ const EditProfilePage = () => {
                   </p>
                 </div>
 
-                {/* PrÈnom */}
+                {/* Pr√©nom */}
                 <div className="sm:col-span-3">
                   <Input
                     id="prenom"
                     name="prenom"
                     type="text"
-                    label="PrÈnom"
+                    label="Pr√©nom"
                     value={formik.values.prenom}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
@@ -488,13 +495,13 @@ const EditProfilePage = () => {
                   />
                 </div>
 
-                {/* TÈlÈphone */}
+                {/* T√©l√©phone */}
                 <div className="sm:col-span-3">
                   <Input
                     id="telephone"
                     name="telephone"
                     type="tel"
-                    label="NumÈro de tÈlÈphone"
+                    label="Num√©ro de t√©l√©phone"
                     value={formik.values.telephone}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
@@ -502,6 +509,7 @@ const EditProfilePage = () => {
                     touched={formik.touched.telephone}
                     icon={<PhoneIcon className="h-5 w-5 text-gray-400" />}
                     required
+                    placeholder="+212612345678 ou 0612345678"
                   />
                 </div>
 
@@ -549,44 +557,93 @@ const EditProfilePage = () => {
 
                 {/* Ville */}
                 <div className="sm:col-span-2">
-                  <Input
-                    id="adresse.ville"
-                    name="adresse.ville"
-                    type="text"
-                    label="Ville"
-                    value={formik.values.adresse.ville}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    error={
-                      formik.touched.adresse?.ville && formik.errors.adresse?.ville
-                    }
-                    touched={formik.touched.adresse?.ville}
-                    required
-                  />
+                  <label htmlFor="adresse.ville" className="block text-sm font-medium text-gray-700">
+                    Ville <span className="text-red-500">*</span>
+                  </label>
+                  <div className="mt-1">
+                    <select
+                      id="adresse.ville"
+                      name="adresse.ville"
+                      className="shadow-sm focus:ring-teal-500 focus:border-teal-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                      value={formik.values.adresse.ville}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      required
+                    >
+                      <option value="">S√©lectionnez une ville</option>
+                      {villesMarocaines.map(ville => (
+                        <option key={ville} value={ville}>{ville}</option>
+                      ))}
+                      <option value="autre">Autre</option>
+                    </select>
+                  </div>
+                  {formik.values.adresse.ville === "autre" && (
+                    <Input
+                      id="adresse.villeAutre"
+                      name="adresse.villeAutre"
+                      type="text"
+                      label="Pr√©cisez la ville"
+                      value={formik.values.adresse.villeAutre || ""}
+                      onChange={(e) => {
+                        formik.handleChange(e);
+                        formik.setFieldValue('adresse.ville', e.target.value);
+                      }}
+                      className="mt-2"
+                      required
+                    />
+                  )}
+                  {formik.touched.adresse?.ville && formik.errors.adresse?.ville && (
+                    <p className="mt-2 text-sm text-red-600">{formik.errors.adresse.ville}</p>
+                  )}
                 </div>
 
                 {/* Pays */}
                 <div className="sm:col-span-2">
-                  <Input
-                    id="adresse.pays"
-                    name="adresse.pays"
-                    type="text"
-                    label="Pays"
-                    value={formik.values.adresse.pays}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    error={
-                      formik.touched.adresse?.pays && formik.errors.adresse?.pays
-                    }
-                    touched={formik.touched.adresse?.pays}
-                    required
-                  />
+                  <label htmlFor="adresse.pays" className="block text-sm font-medium text-gray-700">
+                    Pays <span className="text-red-500">*</span>
+                  </label>
+                  <div className="mt-1">
+                    <select
+                      id="adresse.pays"
+                      name="adresse.pays"
+                      className="shadow-sm focus:ring-teal-500 focus:border-teal-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                      value={formik.values.adresse.pays}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      required
+                    >
+                      <option value="Maroc">Maroc</option>
+                      <option value="France">France</option>
+                      <option value="Alg√©rie">Alg√©rie</option>
+                      <option value="Tunisie">Tunisie</option>
+                      <option value="Espagne">Espagne</option>
+                      <option value="autre">Autre</option>
+                    </select>
+                  </div>
+                  {formik.values.adresse.pays === "autre" && (
+                    <Input
+                      id="adresse.paysAutre"
+                      name="adresse.paysAutre"
+                      type="text"
+                      label="Pr√©cisez le pays"
+                      value={formik.values.adresse.paysAutre || ""}
+                      onChange={(e) => {
+                        formik.handleChange(e);
+                        formik.setFieldValue('adresse.pays', e.target.value);
+                      }}
+                      className="mt-2"
+                      required
+                    />
+                  )}
+                  {formik.touched.adresse?.pays && formik.errors.adresse?.pays && (
+                    <p className="mt-2 text-sm text-red-600">{formik.errors.adresse.pays}</p>
+                  )}
                 </div>
 
                 {/* A propos de moi */}
                 <div className="sm:col-span-6">
                   <label htmlFor="aboutMe" className="block text-sm font-medium text-gray-700">
-                    A propos de moi
+                    √Ä propos de moi
                   </label>
                   <div className="mt-1">
                     <textarea
@@ -600,14 +657,14 @@ const EditProfilePage = () => {
                     ></textarea>
                   </div>
                   <p className="mt-2 text-sm text-gray-500">
-                    Une brËve description de vous-mÍme. {formik.values.aboutMe?.length || 0}/500 caractËres.
+                    Une br√®ve description de vous-m√™me. {formik.values.aboutMe?.length || 0}/500 caract√®res.
                   </p>
                   {formik.touched.aboutMe && formik.errors.aboutMe && (
                     <p className="mt-2 text-sm text-red-600">{formik.errors.aboutMe}</p>
                   )}
                 </div>
 
-                {/* Champs spÈcifiques aux transporteurs */}
+                {/* Champs sp√©cifiques aux transporteurs */}
                 {user?.role === 'transporteur' && (
                   <>
                     <div className="sm:col-span-6">
@@ -627,17 +684,17 @@ const EditProfilePage = () => {
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
                       >
-                        <option value="">SÈlectionnez un type</option>
-                        <option value="independant">IndÈpendant</option>
+                        <option value="">S√©lectionnez un type</option>
+                        <option value="independant">Ind√©pendant</option>
                         <option value="entreprise">Entreprise</option>
                         <option value="autoentrepreneur">Auto-entrepreneur</option>
                       </select>
                     </div>
 
-                    {/* DisponibilitÈ */}
+                    {/* Disponibilit√© */}
                     <div className="sm:col-span-3">
                       <label htmlFor="disponibilite" className="block text-sm font-medium text-gray-700">
-                        DisponibilitÈ
+                        Disponibilit√©
                       </label>
                       <select
                         id="disponibilite"
@@ -647,18 +704,17 @@ const EditProfilePage = () => {
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
                       >
-                        <option value="">SÈlectionnez une disponibilitÈ</option>
+                        <option value="">S√©lectionnez une disponibilit√©</option>
                         <option value="temps_plein">Temps plein</option>
                         <option value="temps_partiel">Temps partiel</option>
                         <option value="weekends">Weekends uniquement</option>
                         <option value="sur_demande">Sur demande</option>
                       </select>
                     </div>
-
-                    {/* SpÈcialitÈs */}
+                    {/* Sp√©cialit√©s */}
                     <div className="sm:col-span-6">
                       <label className="block text-sm font-medium text-gray-700">
-                        SpÈcialitÈs
+                        Sp√©cialit√©s
                       </label>
                       <div className="mt-2">
                         <div className="flex flex-wrap gap-2 mb-3">
@@ -683,7 +739,7 @@ const EditProfilePage = () => {
                             type="text"
                             value={newSpecialite}
                             onChange={(e) => setNewSpecialite(e.target.value)}
-                            placeholder="Ajouter une spÈcialitÈ"
+                            placeholder="Ajouter une sp√©cialit√©"
                             className="block w-full rounded-l-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 sm:text-sm"
                           />
                           <button
@@ -696,7 +752,7 @@ const EditProfilePage = () => {
                         </div>
                       </div>
                       <p className="mt-2 text-sm text-gray-500">
-                        Indiquez vos domaines d'expertise (ex: dÈmÈnagement, transport de meuble, international...)
+                        Indiquez vos domaines d'expertise (ex: d√©m√©nagement, transport de meuble, international...)
                       </p>
                     </div>
                   </>
@@ -774,7 +830,7 @@ const EditProfilePage = () => {
                     touched={passwordFormik.touched.newPassword}
                     icon={<LockClosedIcon className="h-5 w-5 text-gray-400" />}
                     required
-                    helperText="Au moins 8 caractËres, incluant une majuscule, une minuscule et un chiffre."
+                    helperText="Au moins 8 caract√®res, incluant une majuscule, une minuscule et un chiffre."
                   />
 
                   {/* Confirmation du mot de passe */}
@@ -811,7 +867,7 @@ const EditProfilePage = () => {
                       isLoading={loading}
                       disabled={loading}
                     >
-                      Mettre ‡ jour le mot de passe
+                      Mettre √† jour le mot de passe
                     </Button>
                   </div>
                 </div>
@@ -821,20 +877,20 @@ const EditProfilePage = () => {
         </div>
       )}
 
-      {/* Section documents et vÈrification pour les transporteurs */}
+      {/* Section documents et v√©rification pour les transporteurs */}
       {activeTab === 'documents' && user?.role === 'transporteur' && (
         <div className="bg-white shadow overflow-hidden sm:rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <div>
-              <h3 className="text-lg font-medium leading-6 text-gray-900">Documents et vÈrification</h3>
+              <h3 className="text-lg font-medium leading-6 text-gray-900">Documents et v√©rification</h3>
               <p className="mt-1 text-sm text-gray-500">
-                TÈlÈchargez vos documents professionnels pour la vÈrification de votre compte. Cela augmentera votre visibilitÈ et la confiance des clients.
+                T√©l√©chargez vos documents professionnels pour la v√©rification de votre compte. Cela augmentera votre visibilit√© et la confiance des clients.
               </p>
             </div>
 
             <div className="mt-6">
               <label className="block text-sm font-medium text-gray-700">
-                TÈlÈcharger des documents
+                T√©l√©charger des documents
               </label>
               <div className="mt-2">
                 <div
@@ -858,13 +914,13 @@ const EditProfilePage = () => {
                     </svg>
                     <div className="flex text-sm text-gray-600">
                       <label className="relative cursor-pointer bg-white rounded-md font-medium text-teal-600 hover:text-teal-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-teal-500">
-                        <span>TÈlÈcharger un fichier</span>
+                        <span>T√©l√©charger un fichier</span>
                         <input {...getDocumentInputProps()} />
                       </label>
-                      <p className="pl-1">ou glisser-dÈposer</p>
+                      <p className="pl-1">ou glisser-d√©poser</p>
                     </div>
                     <p className="text-xs text-gray-500">
-                      PDF, PNG, JPG, DOC jusqu'‡ 10MB
+                      PDF, PNG, JPG, DOC jusqu'√† 10MB
                     </p>
                   </div>
                 </div>
@@ -874,7 +930,7 @@ const EditProfilePage = () => {
             {/* Liste des documents */}
             {documents.length > 0 && (
               <div className="mt-6">
-                <h4 className="text-sm font-medium text-gray-700">Documents ‡ tÈlÈcharger</h4>
+                <h4 className="text-sm font-medium text-gray-700">Documents √† t√©l√©charger</h4>
                 <ul className="mt-3 divide-y divide-gray-200">
                   {documents.map((doc, index) => (
                     <li key={index} className="py-3 flex items-center justify-between">
@@ -909,12 +965,12 @@ const EditProfilePage = () => {
                           </p>
                           <p className="text-xs text-gray-500">
                             {doc.uploading
-                              ? 'TÈlÈchargement en cours...'
+                              ? 'T√©l√©chargement en cours...'
                               : doc.uploaded
-                              ? 'TÈlÈchargÈ avec succËs'
+                              ? 'T√©l√©charg√© avec succ√®s'
                               : doc.error
                               ? doc.error
-                              : 'En attente de tÈlÈchargement'}
+                              : 'En attente de t√©l√©chargement'}
                           </p>
                         </div>
                       </div>
@@ -946,17 +1002,17 @@ const EditProfilePage = () => {
                       isLoading={uploadingDocuments}
                       disabled={uploadingDocuments}
                     >
-                      TÈlÈcharger les documents
+                      T√©l√©charger les documents
                     </Button>
                   </div>
                 )}
               </div>
             )}
 
-            {/* Documents dÈj‡ tÈlÈchargÈs */}
+            {/* Documents d√©j√† t√©l√©charg√©s */}
             {user?.documents && user.documents.length > 0 && (
               <div className="mt-8">
-                <h4 className="text-sm font-medium text-gray-700">Documents tÈlÈchargÈs</h4>
+                <h4 className="text-sm font-medium text-gray-700">Documents t√©l√©charg√©s</h4>
                 <ul className="mt-3 divide-y divide-gray-200">
                   {user.documents.map((doc, index) => (
                     <li key={index} className="py-3 flex items-center justify-between">
@@ -983,14 +1039,14 @@ const EditProfilePage = () => {
                           </p>
                           <p className="text-xs text-gray-500">
                             {new Date(doc.uploadedAt).toLocaleDateString('fr-FR')}
-                            {doc.verified && ' - VÈrifiÈ'}
+                            {doc.verified && ' - V√©rifi√©'}
                           </p>
                         </div>
                       </div>
                       <div className="ml-4 flex-shrink-0">
                         {doc.verified ? (
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            VÈrifiÈ
+                            V√©rifi√©
                           </span>
                         ) : (
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">

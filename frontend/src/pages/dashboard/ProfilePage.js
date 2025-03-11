@@ -3,19 +3,18 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { toast } from 'react-hot-toast';
 import {
-  UserIcon,
   EnvelopeIcon,
   PhoneIcon,
   MapPinIcon,
   IdentificationIcon,
   PencilSquareIcon,
-  TruckIcon,
   StarIcon
 } from '@heroicons/react/24/outline';
 import Button from '../../components/ui/Button';
 import RatingAndReviewsComponent from '../../components/reviews/RatingAndReviewsComponent';
 import apiClient from '../../api/client';
 import { formatDate } from '../../utils/dateUtils';
+import Avatar from '../../components/ui/Avatar';
 
 const ProfilePage = () => {
   const { user } = useAuth();
@@ -83,54 +82,54 @@ const ProfilePage = () => {
         <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
           <div>
             <h3 className="text-lg leading-6 font-medium text-gray-900">Information transporteur</h3>
-            <p className="mt-1 max-w-2xl text-sm text-gray-500">Détails de votre activité de transport</p>
+            <p className="mt-1 max-w-2xl text-sm text-gray-500">DÃ©tails de votre activitÃ© de transport</p>
           </div>
         </div>
         <div className="border-t border-gray-200">
           <dl>
             <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt className="text-sm font-medium text-gray-500">Type de véhicule</dt>
+              <dt className="text-sm font-medium text-gray-500">Type de vÃ©hicule</dt>
               <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {profile.transporteur?.typeVehicule || 'Non spécifié'}
+                {profile.transporteur?.typeVehicule || 'Non spÃ©cifiÃ©'}
               </dd>
             </div>
             <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt className="text-sm font-medium text-gray-500">Capacité (poids)</dt>
+              <dt className="text-sm font-medium text-gray-500">CapacitÃ© (poids)</dt>
               <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                 {profile.transporteur?.capacitePoids 
                   ? `${profile.transporteur.capacitePoids} kg` 
-                  : 'Non spécifié'}
+                  : 'Non spÃ©cifiÃ©'}
               </dd>
             </div>
             <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt className="text-sm font-medium text-gray-500">Capacité (volume)</dt>
+              <dt className="text-sm font-medium text-gray-500">CapacitÃ© (volume)</dt>
               <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                 {profile.transporteur?.capaciteVolume 
-                  ? `${profile.transporteur.capaciteVolume} m³` 
-                  : 'Non spécifié'}
+                  ? `${profile.transporteur.capaciteVolume} mÂ³` 
+                  : 'Non spÃ©cifiÃ©'}
               </dd>
             </div>
             <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
               <dt className="text-sm font-medium text-gray-500">Zones desservies</dt>
               <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {profile.transporteur?.zonesDesservies?.join(', ') || 'Non spécifié'}
+                {profile.transporteur?.zonesDesservies?.join(', ') || 'Non spÃ©cifiÃ©'}
               </dd>
             </div>
             <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
               <dt className="text-sm font-medium text-gray-500">Assurance</dt>
               <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {profile.transporteur?.assurance ? 'Vérifié' : 'Non vérifié'}
+                {profile.transporteur?.assurance ? 'VÃ©rifiÃ©' : 'Non vÃ©rifiÃ©'}
               </dd>
             </div>
             <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-              <dt className="text-sm font-medium text-gray-500">Statut de vérification</dt>
+              <dt className="text-sm font-medium text-gray-500">Statut de vÃ©rification</dt>
               <dd className="mt-1 text-sm sm:mt-0 sm:col-span-2">
                 <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                   profile.transporteur?.verifie 
                     ? 'bg-green-100 text-green-800' 
                     : 'bg-yellow-100 text-yellow-800'
                 }`}>
-                  {profile.transporteur?.verifie ? 'Vérifié' : 'En attente de vérification'}
+                  {profile.transporteur?.verifie ? 'VÃ©rifiÃ©' : 'En attente de vÃ©rification'}
                 </span>
               </dd>
             </div>
@@ -153,19 +152,7 @@ const ProfilePage = () => {
       {/* Section d'informations personnelles */}
       <div className="bg-white shadow overflow-hidden sm:rounded-lg">
         <div className="px-4 py-5 sm:px-6 flex items-start">
-          <div className="flex-shrink-0 h-20 w-20 rounded-full overflow-hidden bg-gray-200 mr-4">
-            {profile.photo ? (
-              <img 
-                src={profile.photo} 
-                alt={`${profile.prenom} ${profile.nom}`} 
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="h-full w-full flex items-center justify-center bg-teal-500 text-white">
-                <UserIcon className="h-10 w-10" />
-              </div>
-            )}
-          </div>
+          <Avatar user={profile} size="xl" className="mr-4" />
           <div>
             <h3 className="text-xl font-bold text-gray-900">
               {profile.prenom} {profile.nom}
@@ -194,7 +181,7 @@ const ProfilePage = () => {
             <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
               <dt className="text-sm font-medium text-gray-500 flex items-center">
                 <PhoneIcon className="h-5 w-5 mr-2 text-gray-400" />
-                Téléphone
+                TÃ©lÃ©phone
               </dt>
               <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{profile.telephone}</dd>
             </div>
@@ -211,7 +198,7 @@ const ProfilePage = () => {
                     {profile.adresse.pays}
                   </>
                 ) : (
-                  'Non spécifiée'
+                  'Non spÃ©cifiÃ©e'
                 )}
               </dd>
             </div>
@@ -221,7 +208,7 @@ const ProfilePage = () => {
                 SIRET (si professionnel)
               </dt>
               <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {profile.siret || 'Non spécifié'}
+                {profile.siret || 'Non spÃ©cifiÃ©'}
               </dd>
             </div>
             <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
@@ -241,7 +228,7 @@ const ProfilePage = () => {
       <div className="bg-white shadow overflow-hidden sm:rounded-lg p-6">
         <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
           <StarIcon className="h-5 w-5 mr-2 text-yellow-500" />
-          Avis et évaluations
+          Avis et Ã©valuations
         </h3>
         <RatingAndReviewsComponent userId={user.id} />
       </div>

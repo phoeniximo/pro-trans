@@ -19,5 +19,8 @@ router.post('/', annonceController.creerAnnonce);
 router.put('/:id', annonceController.modifierAnnonce);
 router.delete('/:id', annonceController.supprimerAnnonce);
 
+// Route d'upload des photos
+router.post('/:id/upload', annonceController.uploadPhotos);
+
 // Export du router
 module.exports = router;

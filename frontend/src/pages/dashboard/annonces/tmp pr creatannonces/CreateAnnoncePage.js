@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
@@ -12,110 +12,6 @@ import annonceService from '../../../services/annonceService';
 import Input from '../../../components/ui/Input';
 import Button from '../../../components/ui/Button';
 
-// List of Moroccan cities for autocomplete
-const moroccanCities = [
-  "Casablanca", "Rabat", "Marrakech", "F√®s", "Tanger", "Agadir", "Mekn√®s", "Oujda", 
-  "K√©nitra", "T√©touan", "Sal√©", "Nador", "Mohamm√©dia", "El Jadida", "B√©ni Mellal", 
-  "Taza", "Kh√©misset", "Taourirt", "Settat", "Berkane", "Khouribga", "Ouarzazate", 
-  "Larache", "Guelmim", "Kh√©nifra", "Safi", "Essaouira", "Taroudant", "Tiznit", 
-  "Asilah", "Chefchaouen", "Ifrane", "Azrou", "Midelt", "Errachidia", "Zagora", 
-  "Tinghir", "Figuig", "Al Hoceima", "Dakhla", "La√¢youne", "Tata", "Tan-Tan", 
-  "Azemmour", "Martil", "Fnideq", "M'diq", "Temara", "Skhirat", "Berrechid", 
-  "Benslimane", "Youssoufia", "Azilal", "Demnat", "Sefrou", "Taounate", "Ouazzane",
-  "Chichaoua", "Imzouren", "Beni Ansar", "Al Aroui", "Saidia", "Ahfir", "Jerada", 
-  "Guercif", "Bouarfa", "Ifni", "Imilchil", "Merzouga", "Tafraoute", "Amizmiz", 
-  "Imlil", "Asni", "Oualidia", "Moulay Bousselham", "A√Øt Ben Haddou", "Erfoud", 
-  "Rissani", "Tamegroute", "Mirleft", "Sidi Ifni", "Tarfaya", "Smara", "Boujdour", 
-  "Guerguerat", "Assa", "Zag", "Akka", "Akhfenir", "Tafraout", "Bab Taza", "Debdou", 
-  "Taourirt", "Tahla", "A√Øn Leuh", "Zaouiat Cheikh", "El Hajeb", "Mrirt", "Ain Taoujdate", 
-  "Souk El Arbaa", "Had Kourt", "Taza", "Oued Amlil", "Missour", "Outat El Haj", 
-  "Boulemane", "Imouzzer Kandar", "El Menzel", "Ribat El Kheir", "Ain Cheggag", 
-  "Bhalil", "Moulay Yacoub", "Beni Mellal", "El Ksiba", "Kasba Tadla", "Fquih Ben Salah", 
-  "Souk Sebt Oulad Nemma", "Kasbat Oulad Ayad", "Boujniba", "Hattane", "Oued Zem", 
-  "Aguelmous", "Tiflet", "Sidi Allal El Bahraoui", "Sidi Kacem", "Mechra Bel Ksiri", 
-  "Sidi Slimane", "Sidi Yahia El Gharb", "El Ksar El Kebir", "Assilah", "Ksar El Kebir", 
-  "Moulay Idriss Zerhoun", "Rommani", "Timahdite", "Toulal", "Zemamra", "Sidi Bennour", 
-  "Had Soualem", "Bouskoura", "Deroua", "Sidi Rahal"
-];
-
-// City Autocomplete Component
-const CityAutoComplete = ({ name, label, value, onChange, error, touched, required, placeholder }) => {
-  const [inputValue, setInputValue] = useState(value || '');
-  const [suggestions, setSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-
-  useEffect(() => {
-    setInputValue(value || '');
-  }, [value]);
-
-  const handleInputChange = (e) => {
-    const value = e.target.value;
-    setInputValue(value);
-    
-    // Filter cities that match the input
-    if (value.trim()) {
-      const filtered = moroccanCities.filter(
-        city => city.toLowerCase().includes(value.toLowerCase())
-      ).slice(0, 10); // Limit to 10 suggestions
-      
-      setSuggestions(filtered);
-      setShowSuggestions(true);
-    } else {
-      setSuggestions([]);
-      setShowSuggestions(false);
-    }
-  };
-
-  const handleSuggestionClick = (suggestion) => {
-    setInputValue(suggestion);
-    onChange({ target: { name, value: suggestion } });
-    setShowSuggestions(false);
-  };
-
-  return (
-    <div className="form-group relative">
-      <label htmlFor={name} className="form-label">
-        {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
-      </label>
-      <input
-        id={name}
-        name={name}
-        type="text"
-        className={`form-control ${touched && error ? 'border-red-300' : ''}`}
-        value={inputValue}
-        onChange={handleInputChange}
-        onBlur={() => {
-          // Close suggestions after a short delay to allow clicks
-          setTimeout(() => setShowSuggestions(false), 200);
-        }}
-        onFocus={() => {
-          if (inputValue.trim()) {
-            setShowSuggestions(true);
-          }
-        }}
-        placeholder={placeholder}
-      />
-      {touched && error && (
-        <p className="form-error">{error}</p>
-      )}
-      {showSuggestions && suggestions.length > 0 && (
-        <ul className="absolute z-10 w-full bg-white border border-gray-300 mt-1 rounded-md shadow-lg max-h-60 overflow-auto">
-          {suggestions.map((suggestion, index) => (
-            <li
-              key={index}
-              className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-              onClick={() => handleSuggestionClick(suggestion)}
-            >
-              {suggestion}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-};
-
 const CreateAnnoncePage = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -123,33 +19,6 @@ const CreateAnnoncePage = () => {
   const [photos, setPhotos] = useState([]);
   const [previewPhotos, setPreviewPhotos] = useState([]);
   const [showOptions, setShowOptions] = useState(false);
-
-  // Mappage des types de transport du formulaire vers les valeurs accept√©es par l'API
-  const mapTypeTransport = (displayType) => {
-    // Table de correspondance entre l'affichage et les valeurs API
-    const typeMapping = {
-      'D√©m√©nagements': 'demenagement',
-      'Meuble, appareil m√©nager...': 'meuble',
-      'Caisses/Cartons': 'carton',
-      'Bagages': 'bagage',
-      'Marchandises': 'marchandise',
-      'Colis': 'colis',
-      'Palettes': 'palette',
-      'Motos et v√©los': 'moto_velo',
-      'Pi√®ces automobile': 'piece_auto',
-      'Marchandise fragile': 'fragile',
-      'Voitures': 'voiture',
-      'Conteneur maritime': 'conteneur',
-      'Machine et √©quipement': 'machine',
-      'Mat√©riels sans conditionnement (vrac)': 'vrac',
-      'Mat√©riel hors gabarit (piscine, citerne...)': 'hors_gabarit',
-      'Autres v√©hicules': 'autre_vehicule',
-      'Bateaux': 'bateau',
-      'Autres livraisons': 'autre'
-    };
-    
-    return typeMapping[displayType] || displayType.toLowerCase().replace(/\s+/g, '_');
-  };
 
   // Configuration de la dropzone pour les photos
   const { getRootProps, getInputProps } = useDropzone({
@@ -159,10 +28,10 @@ const CreateAnnoncePage = () => {
     maxSize: 5242880, // 5MB
     maxFiles: 5,
     onDrop: (acceptedFiles) => {
-      // Ajouter les nouveaux fichiers √† la liste
+      // Ajouter les nouveaux fichiers ‡ la liste
       setPhotos([...photos, ...acceptedFiles]);
       
-      // Cr√©er des URLs pour la pr√©visualisation
+      // CrÈer des URLs pour la prÈvisualisation
       const newPreviews = acceptedFiles.map(file => Object.assign(file, {
         preview: URL.createObjectURL(file)
       }));
@@ -175,7 +44,7 @@ const CreateAnnoncePage = () => {
     const newPhotos = [...photos];
     const newPreviews = [...previewPhotos];
     
-    // R√©voquer l'URL de pr√©visualisation pour √©viter les fuites de m√©moire
+    // RÈvoquer l'URL de prÈvisualisation pour Èviter les fuites de mÈmoire
     URL.revokeObjectURL(previewPhotos[index].preview);
     
     newPhotos.splice(index, 1);
@@ -185,74 +54,80 @@ const CreateAnnoncePage = () => {
     setPreviewPhotos(newPreviews);
   };
 
-  // Sch√©ma de validation avec Yup - CORRIG√â COMPL√àTEMENT
+  // SchÈma de validation avec Yup
   const validationSchema = Yup.object({
     titre: Yup.string()
       .required('Le titre est obligatoire')
-      .max(100, 'Maximum 100 caract√®res'),
+      .max(100, 'Maximum 100 caractËres'),
     description: Yup.string()
-      .max(1000, 'Maximum 1000 caract√®res'), // Suppression de required() et min()
+      .required('La description est obligatoire')
+      .min(20, 'Minimum 20 caractËres'),
     typeTransport: Yup.string()
-      .required('Le type de transport est obligatoire'),
-  villeDepart: Yup.string()
-    .required('La ville de d√©part est obligatoire'),
-  villeArrivee: Yup.string()
-    .required('La ville d\'arriv√©e est obligatoire'),
-  dateDepart: Yup.date()
-    .required('La date de d√©part est obligatoire')
-    .min(new Date(), 'La date doit √™tre dans le futur'),
-  flexibiliteDate: Yup.boolean(),
-  poids: Yup.number()
-    .nullable()
-    .transform((value, originalValue) => 
-      originalValue === '' || isNaN(originalValue) ? null : value)
-    .positive('Le poids doit √™tre positif'),
-  unite_poids: Yup.string()
-    .oneOf(['kg', 'tonnes'], 'Unit√© de poids invalide'),
-  volume: Yup.number()
-    .nullable()
-    .transform((value, originalValue) => 
-      originalValue === '' || isNaN(originalValue) ? null : value)
-    .positive('Le volume doit √™tre positif'),
-  'dimensions.longueur': Yup.number()
-    .when('typeTransport', {
-      is: (val) => ['Colis', 'Palettes', 'Caisses/Cartons', 'Marchandise fragile'].includes(val),
-      then: () => Yup.number().nullable().transform((value, originalValue) => 
-        originalValue === '' || isNaN(originalValue) ? null : value).positive('La longueur doit √™tre positive')
-    }),
-  'dimensions.largeur': Yup.number()
-    .when('typeTransport', {
-      is: (val) => ['Colis', 'Palettes', 'Caisses/Cartons', 'Marchandise fragile'].includes(val),
-      then: () => Yup.number().nullable().transform((value, originalValue) => 
-        originalValue === '' || isNaN(originalValue) ? null : value).positive('La largeur doit √™tre positive')
-    }),
-  'dimensions.hauteur': Yup.number()
-    .when('typeTransport', {
-      is: (val) => ['Colis', 'Palettes', 'Caisses/Cartons', 'Marchandise fragile'].includes(val),
-      then: () => Yup.number().nullable().transform((value, originalValue) => 
-        originalValue === '' || isNaN(originalValue) ? null : value).positive('La hauteur doit √™tre positive')
-    }),
-  'dimensions.unite': Yup.string()
-    .oneOf(['cm', 'm'], 'Unit√© de dimension invalide'),
-  nombreColis: Yup.number()
-    .when('typeTransport', {
-      is: 'Colis',
-      then: () => Yup.number().nullable().transform((value, originalValue) => 
-        originalValue === '' || isNaN(originalValue) ? null : value).positive().integer()
-    }),
-  budget: Yup.number()
-    .nullable()
-    .transform((value, originalValue) => 
-      originalValue === '' || isNaN(originalValue) ? null : value)
-    .positive('Le budget doit √™tre positif'),
-  isUrgent: Yup.boolean(),
-  'optionsTransport.chargement': Yup.boolean(),
-  'optionsTransport.dechargement': Yup.boolean(),
-  'optionsTransport.montage': Yup.boolean(),
-  'optionsTransport.demontage': Yup.boolean(),
-  'optionsTransport.emballage': Yup.boolean(),
-  commentairesTransporteur: Yup.string()
-});
+      .required('Le type de transport est obligatoire')
+      .oneOf(['colis', 'meuble', 'marchandise', 'palette', 'demenagement', 'vehicule', 'autre'], 'Type invalide'),
+    villeDepart: Yup.string()
+      .required('La ville de dÈpart est obligatoire'),
+    'adresseDepart.rue': Yup.string()
+      .required('L\'adresse de dÈpart est obligatoire'),
+    'adresseDepart.codePostal': Yup.string()
+      .required('Le code postal de dÈpart est obligatoire')
+      .matches(/^[0-9]{5}$/, 'Le code postal doit contenir 5 chiffres'),
+    'adresseDepart.ville': Yup.string()
+      .required('La ville de dÈpart est obligatoire'),
+    villeArrivee: Yup.string()
+      .required('La ville d\'arrivÈe est obligatoire'),
+    'adresseArrivee.rue': Yup.string()
+      .required('L\'adresse d\'arrivÈe est obligatoire'),
+    'adresseArrivee.codePostal': Yup.string()
+      .required('Le code postal d\'arrivÈe est obligatoire')
+      .matches(/^[0-9]{5}$/, 'Le code postal doit contenir 5 chiffres'),
+    'adresseArrivee.ville': Yup.string()
+      .required('La ville d\'arrivÈe est obligatoire'),
+    dateDepart: Yup.date()
+      .required('La date de dÈpart est obligatoire')
+      .min(new Date(), 'La date doit Ítre dans le futur'),
+    flexibiliteDate: Yup.boolean(),
+    poids: Yup.number()
+      .positive('Le poids doit Ítre positif'),
+    unite_poids: Yup.string()
+      .oneOf(['kg', 'tonnes'], 'UnitÈ de poids invalide'),
+    volume: Yup.number()
+      .positive('Le volume doit Ítre positif'),
+    'dimensions.longueur': Yup.number()
+      .when('typeTransport', {
+        is: (val) => ['colis', 'meuble', 'marchandise', 'palette'].includes(val),
+        then: Yup.number().required('La longueur est obligatoire').positive()
+      }),
+    'dimensions.largeur': Yup.number()
+      .when('typeTransport', {
+        is: (val) => ['colis', 'meuble', 'marchandise', 'palette'].includes(val),
+        then: Yup.number().required('La largeur est obligatoire').positive()
+      }),
+    'dimensions.hauteur': Yup.number()
+      .when('typeTransport', {
+        is: (val) => ['colis', 'meuble', 'marchandise', 'palette'].includes(val),
+        then: Yup.number().required('La hauteur est obligatoire').positive()
+      }),
+    'dimensions.unite': Yup.string()
+      .oneOf(['cm', 'm'], 'UnitÈ de dimension invalide'),
+    nombreColis: Yup.number()
+      .when('typeTransport', {
+        is: 'colis',
+        then: Yup.number().required('Le nombre de colis est obligatoire').positive().integer()
+      }),
+    budget: Yup.number()
+      .positive('Le budget doit Ítre positif'),
+    valeurDeclaree: Yup.number()
+      .positive('La valeur dÈclarÈe doit Ítre positive'),
+    isUrgent: Yup.boolean(),
+    'optionsTransport.chargement': Yup.boolean(),
+    'optionsTransport.dechargement': Yup.boolean(),
+    'optionsTransport.montage': Yup.boolean(),
+    'optionsTransport.demontage': Yup.boolean(),
+    'optionsTransport.emballage': Yup.boolean(),
+    'optionsTransport.assurance': Yup.boolean(),
+    commentairesTransporteur: Yup.string()
+  });
 
   // Initialisation du formulaire avec Formik
   const formik = useFormik({
@@ -261,7 +136,19 @@ const CreateAnnoncePage = () => {
       description: '',
       typeTransport: '',
       villeDepart: '',
+      adresseDepart: {
+        rue: '',
+        codePostal: '',
+        ville: '',
+        pays: 'France'
+      },
       villeArrivee: '',
+      adresseArrivee: {
+        rue: '',
+        codePostal: '',
+        ville: '',
+        pays: 'France'
+      },
       dateDepart: new Date(Date.now() + 86400000), // Demain
       dateArrivee: null,
       flexibiliteDate: false,
@@ -276,13 +163,15 @@ const CreateAnnoncePage = () => {
       },
       nombreColis: 1,
       contenuColis: [],
+      valeurDeclaree: 0,
       budget: '',
       optionsTransport: {
         chargement: false,
         dechargement: false,
         montage: false,
         demontage: false,
-        emballage: false
+        emballage: false,
+        assurance: false
       },
       commentairesTransporteur: '',
       isUrgent: false
@@ -290,74 +179,14 @@ const CreateAnnoncePage = () => {
     validationSchema,
     onSubmit: async (values) => {
       try {
-        // Si nous ne sommes pas √† l'√©tape finale, ne pas soumettre
-        if (step !== 4) {
-          console.log("Tentative de soumission √† l'√©tape", step, "- ignor√©e");
-          return;
-        }
-        
         setIsSubmitting(true);
-        console.log("Soumission du formulaire √† l'√©tape 4");
         
-        // Pr√©paration des donn√©es pour le format attendu par l'API
-        const annonceData = {
-          titre: values.titre,
-          description: values.description,
-          typeTransport: mapTypeTransport(values.typeTransport),
-          villeDepart: values.villeDepart,
-          villeArrivee: values.villeArrivee,
-          dateDepart: values.dateDepart instanceof Date ? values.dateDepart.toISOString() : values.dateDepart,
-          dateArrivee: values.dateArrivee instanceof Date ? values.dateArrivee.toISOString() : undefined,
-          flexibiliteDate: Boolean(values.flexibiliteDate),
-          poids: values.poids ? Number(values.poids) : undefined,
-          unite_poids: values.unite_poids || 'kg',
-          volume: values.volume ? Number(values.volume) : undefined,
-          statut: 'disponible',
-          isUrgent: Boolean(values.isUrgent),
-          budget: values.budget ? Number(values.budget) : undefined
-        };
-
-        // Ajouter les dimensions si pertinent
-        if (['Colis', 'Palettes', 'Caisses/Cartons', 'Marchandise fragile'].includes(values.typeTransport)) {
-          const mappedType = mapTypeTransport(values.typeTransport);
-          if (['colis', 'palette', 'carton', 'fragile'].includes(mappedType)) {
-            annonceData.dimensions = {
-              longueur: values.dimensions.longueur ? Number(values.dimensions.longueur) : undefined,
-              largeur: values.dimensions.largeur ? Number(values.dimensions.largeur) : undefined,
-              hauteur: values.dimensions.hauteur ? Number(values.dimensions.hauteur) : undefined,
-              unite: values.dimensions.unite
-            };
-          }
-        }
-
-        // Ajouter le nombre de colis si c'est un colis
-        if (values.typeTransport === 'Colis') {
-          annonceData.nombreColis = Number(values.nombreColis) || 1;
-        }
-
-        // Ajouter les options de transport
-        annonceData.optionsTransport = {
-          chargement: values.optionsTransport.chargement,
-          dechargement: values.optionsTransport.dechargement,
-          montage: values.optionsTransport.montage,
-          demontage: values.optionsTransport.demontage,
-          emballage: values.optionsTransport.emballage
-        };
-
-        // Ajouter les commentaires si pr√©sents
-        if (values.commentairesTransporteur) {
-          annonceData.commentairesTransporteur = values.commentairesTransporteur;
-        }
+        // CrÈer l'annonce
+        const response = await annonceService.createAnnonce(values);
+        const annonceId = response.data._id;
         
-        // Cr√©er l'annonce
-        console.log('Donn√©es envoy√©es √† l\'API:', annonceData);
-        const responseData = await annonceService.createAnnonce(annonceData);
-        console.log("R√©ponse de la cr√©ation d'annonce:", responseData);
-        const annonceId = responseData.data._id;
-        
-        // Si des photos ont √©t√© ajout√©es, les uploader
+        // Si des photos ont ÈtÈ ajoutÈes, les uploader
         if (photos.length > 0) {
-          console.log(`Chargement de ${photos.length} photos pour l'annonce ${annonceId}`);
           const formData = new FormData();
           photos.forEach(photo => {
             formData.append('photos', photo);
@@ -366,110 +195,76 @@ const CreateAnnoncePage = () => {
           await annonceService.uploadImages(annonceId, formData);
         }
         
-        toast.success('Annonce cr√©√©e avec succ√®s');
+        toast.success('Annonce crÈÈe avec succËs');
         navigate(`/dashboard/annonces/${annonceId}`);
       } catch (error) {
-        console.error('Erreur d√©taill√©e:', error);
-        
-        // Am√©lioration de l'affichage des erreurs de validation
-        let errorMessage = 'Erreur lors de la cr√©ation de l\'annonce';
-        
-        if (error.message) {
-          errorMessage = error.message;
-        }
-        
-        // Affichage des erreurs sp√©cifiques de validation si disponibles
-        if (error.errors && Array.isArray(error.errors) && error.errors.length > 0) {
-          errorMessage = `Erreur de validation: ${error.errors.join(', ')}`;
-          console.error('Erreurs de validation sp√©cifiques:', error.errors);
-          
-          // Afficher chaque erreur de validation s√©par√©ment
-          error.errors.forEach(err => {
-            toast.error(err);
-          });
-        } else {
-          toast.error(errorMessage);
-        }
+        toast.error(error.message || 'Erreur lors de la crÈation de l\'annonce');
+        console.error('Erreur de crÈation d\'annonce:', error);
       } finally {
         setIsSubmitting(false);
       }
     }
   });
 
-  // Validation sp√©cifique √† l'√©tape en cours - MODIFI√â pour simplifier la validation
+  // Validation spÈcifique ‡ l'Ètape en cours
   const validateStep = () => {
     let errors = {};
     
     if (step === 1) {
       if (!formik.values.titre) errors.titre = 'Le titre est obligatoire';
+      if (!formik.values.description) errors.description = 'La description est obligatoire';
       if (!formik.values.typeTransport) errors.typeTransport = 'Le type de transport est obligatoire';
     } else if (step === 2) {
-      if (!formik.values.villeDepart) errors.villeDepart = 'La ville de d√©part est obligatoire';
-      if (!formik.values.villeArrivee) errors.villeArrivee = 'La ville d\'arriv√©e est obligatoire';
-    } else if (step === 3) {
-      // Validation de base pour l'√©tape 3 
-      if (!formik.values.dateDepart) errors.dateDepart = 'La date de d√©part est obligatoire';
-      
-      // Pour le d√©bogage
-      console.log("Validation de l'√©tape 3 - Erreurs:", Object.keys(errors).length > 0 ? errors : "Aucune erreur");
+      if (!formik.values.villeDepart) errors.villeDepart = 'La ville de dÈpart est obligatoire';
+      if (!formik.values.adresseDepart.rue) errors['adresseDepart.rue'] = 'L\'adresse de dÈpart est obligatoire';
+      if (!formik.values.adresseDepart.codePostal) errors['adresseDepart.codePostal'] = 'Le code postal de dÈpart est obligatoire';
+      if (!formik.values.adresseDepart.ville) errors['adresseDepart.ville'] = 'La ville de dÈpart est obligatoire';
+      if (!formik.values.villeArrivee) errors.villeArrivee = 'La ville d\'arrivÈe est obligatoire';
+      if (!formik.values.adresseArrivee.rue) errors['adresseArrivee.rue'] = 'L\'adresse d\'arrivÈe est obligatoire';
+      if (!formik.values.adresseArrivee.codePostal) errors['adresseArrivee.codePostal'] = 'Le code postal d\'arrivÈe est obligatoire';
+      if (!formik.values.adresseArrivee.ville) errors['adresseArrivee.ville'] = 'La ville d\'arrivÈe est obligatoire';
     }
     
     return Object.keys(errors).length === 0;
   };
 
-  // Passer √† l'√©tape suivante
+  // Passer ‡ l'Ètape suivante
   const nextStep = () => {
-    console.log("Tentative de passage √† l'√©tape suivante, actuellement √† l'√©tape", step);
     if (validateStep()) {
-      console.log("Validation r√©ussie, passage √† l'√©tape", step + 1);
       setStep(step + 1);
     } else {
-      console.warn("Validation √©chou√©e, reste √† l'√©tape", step);
       toast.error('Veuillez remplir tous les champs obligatoires');
     }
   };
 
-  // Revenir √† l'√©tape pr√©c√©dente
+  // Revenir ‡ l'Ètape prÈcÈdente
   const prevStep = () => {
-    console.log("Retour √† l'√©tape", step - 1);
     setStep(step - 1);
   };
 
-  // G√©rer le changement de date de d√©part
+  // GÈrer le changement de date de dÈpart
   const handleDateDepartChange = (date) => {
     formik.setFieldValue('dateDepart', date);
   };
 
-  // G√©rer le changement de date d'arriv√©e
+  // GÈrer le changement de date d'arrivÈe
   const handleDateArriveeChange = (date) => {
     formik.setFieldValue('dateArrivee', date);
   };
 
-  // Nettoyer les URLs de pr√©visualisation avant le d√©montage du composant
+  // Nettoyer les URLs de prÈvisualisation avant le dÈmontage du composant
   React.useEffect(() => {
     return () => {
       previewPhotos.forEach(photo => URL.revokeObjectURL(photo.preview));
     };
   }, [previewPhotos]);
 
-  // Handler de soumission manuelle
-  const handleManualSubmit = (e) => {
-    console.log("handleManualSubmit appel√© √† l'√©tape", step);
-    if (step !== 4) {
-      e.preventDefault();
-      console.log("Soumission emp√™ch√©e car pas √† l'√©tape 4");
-      return false;
-    }
-    e.preventDefault();
-    formik.handleSubmit();
-  };
-
   return (
     <div className="max-w-3xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Publier une annonce</h1>
         <p className="mt-2 text-gray-600">
-          D√©crivez votre besoin de transport en d√©tail pour recevoir les meilleurs devis.
+          DÈcrivez votre besoin de transport en dÈtail pour recevoir les meilleurs devis.
         </p>
       </div>
 
@@ -481,7 +276,7 @@ const CreateAnnoncePage = () => {
               <div className={`rounded-full h-8 w-8 flex items-center justify-center border-2 ${step >= 1 ? 'border-teal-600 bg-teal-100' : 'border-gray-300'}`}>
                 1
               </div>
-              <span className="ml-2 text-sm font-medium">Informations g√©n√©rales</span>
+              <span className="ml-2 text-sm font-medium">Informations gÈnÈrales</span>
             </div>
           </div>
           <div className={`h-1 flex-1 mx-2 ${step >= 2 ? 'bg-teal-600' : 'bg-gray-300'}`}></div>
@@ -490,7 +285,7 @@ const CreateAnnoncePage = () => {
               <div className={`rounded-full h-8 w-8 flex items-center justify-center border-2 ${step >= 2 ? 'border-teal-600 bg-teal-100' : 'border-gray-300'}`}>
                 2
               </div>
-              <span className="ml-2 text-sm font-medium">Villes</span>
+              <span className="ml-2 text-sm font-medium">Adresses</span>
             </div>
           </div>
           <div className={`h-1 flex-1 mx-2 ${step >= 3 ? 'bg-teal-600' : 'bg-gray-300'}`}></div>
@@ -499,7 +294,7 @@ const CreateAnnoncePage = () => {
               <div className={`rounded-full h-8 w-8 flex items-center justify-center border-2 ${step >= 3 ? 'border-teal-600 bg-teal-100' : 'border-gray-300'}`}>
                 3
               </div>
-              <span className="ml-2 text-sm font-medium">D√©tails et options</span>
+              <span className="ml-2 text-sm font-medium">DÈtails et options</span>
             </div>
           </div>
           <div className={`h-1 flex-1 mx-2 ${step >= 4 ? 'bg-teal-600' : 'bg-gray-300'}`}></div>
@@ -514,32 +309,19 @@ const CreateAnnoncePage = () => {
         </div>
       </div>
 
-      {/* MODIFICATION: contr√¥le plus strict de la soumission du formulaire */}
-      <form 
-        onSubmit={(e) => {
-          // Ne soumettre que si nous sommes √† l'√©tape 4
-          if (step !== 4) {
-            e.preventDefault();
-            console.log("Soumission emp√™ch√©e √† l'√©tape", step);
-            return false;
-          }
-          console.log("Formulaire soumis √† l'√©tape 4");
-          handleManualSubmit(e);
-        }} 
-        className="card shadow-md rounded-lg"
-      >
+      <form onSubmit={formik.handleSubmit} className="card shadow-md rounded-lg">
         <div className="card-body">
-          {/* Etape 1: Informations g√©n√©rales */}
+          {/* Etape 1: Informations gÈnÈrales */}
           {step === 1 && (
             <div>
-              <h2 className="text-xl font-semibold mb-4">Informations g√©n√©rales</h2>
+              <h2 className="text-xl font-semibold mb-4">Informations gÈnÈrales</h2>
               
               <div className="space-y-4">
                 <Input
                   id="titre"
                   name="titre"
                   label="Titre de l'annonce"
-                  placeholder="Ex: Transport d'un canap√© de Casablanca √† Rabat"
+                  placeholder="Ex: Transport d'un canapÈ de Paris ‡ Lyon"
                   value={formik.values.titre}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
@@ -550,14 +332,14 @@ const CreateAnnoncePage = () => {
                 
                 <div className="form-group">
                   <label htmlFor="description" className="form-label">
-                    Description d√©taill√©e
-                    {/* La description n'est plus obligatoire, donc on a supprim√© l'ast√©risque */}
+                    Description dÈtaillÈe
+                    <span className="text-red-500 ml-1">*</span>
                   </label>
                   <textarea
                     id="description"
                     name="description"
                     rows="5"
-                    placeholder="D√©crivez en d√©tail ce que vous souhaitez transporter, avec toutes les informations utiles pour le transporteur."
+                    placeholder="DÈcrivez en dÈtail ce que vous souhaitez transporter, avec toutes les informations utiles pour le transporteur."
                     className={`form-control ${formik.touched.description && formik.errors.description ? 'border-red-300' : ''}`}
                     value={formik.values.description}
                     onChange={formik.handleChange}
@@ -581,25 +363,14 @@ const CreateAnnoncePage = () => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                   >
-                    <option value="">S√©lectionnez un type</option>
-                    <option value="D√©m√©nagements">D√©m√©nagements</option>
-                    <option value="Meuble, appareil m√©nager...">Meuble, appareil m√©nager...</option>
-                    <option value="Caisses/Cartons">Caisses/Cartons</option>
-                    <option value="Bagages">Bagages</option>
-                    <option value="Marchandises">Marchandises</option>
-                    <option value="Colis">Colis</option>
-                    <option value="Palettes">Palettes</option>
-                    <option value="Motos et v√©los">Motos et v√©los</option>
-                    <option value="Pi√®ces automobile">Pi√®ces automobile</option>
-                    <option value="Marchandise fragile">Marchandise fragile</option>
-                    <option value="Voitures">Voitures</option>
-                    <option value="Conteneur maritime">Conteneur maritime</option>
-                    <option value="Machine et √©quipement">Machine et √©quipement</option>
-                    <option value="Mat√©riels sans conditionnement (vrac)">Mat√©riels sans conditionnement (vrac)</option>
-                    <option value="Mat√©riel hors gabarit (piscine, citerne...)">Mat√©riel hors gabarit (piscine, citerne...)</option>
-                    <option value="Autres v√©hicules">Autres v√©hicules</option>
-                    <option value="Bateaux">Bateaux</option>
-                    <option value="Autres livraisons">Autres livraisons</option>
+                    <option value="">SÈlectionnez un type</option>
+                    <option value="colis">Colis</option>
+                    <option value="meuble">Meuble</option>
+                    <option value="marchandise">Marchandise</option>
+                    <option value="palette">Palette</option>
+                    <option value="demenagement">DÈmÈnagement</option>
+                    <option value="vehicule">VÈhicule</option>
+                    <option value="autre">Autre</option>
                   </select>
                   {formik.touched.typeTransport && formik.errors.typeTransport && (
                     <p className="form-error">{formik.errors.typeTransport}</p>
@@ -609,48 +380,144 @@ const CreateAnnoncePage = () => {
             </div>
           )}
 
-          {/* Etape 2: Villes */}
+          {/* Etape 2: Adresses */}
           {step === 2 && (
             <div>
-              <h2 className="text-xl font-semibold mb-4">Villes de d√©part et d'arriv√©e</h2>
+              <h2 className="text-xl font-semibold mb-4">Adresses de dÈpart et d'arrivÈe</h2>
               
               <div className="mb-6">
+                <h3 className="text-lg font-medium mb-3">Adresse de dÈpart</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <CityAutoComplete
-                    name="villeDepart"
-                    label="Ville de d√©part"
-                    placeholder="Entrez la ville de d√©part"
-                    value={formik.values.villeDepart}
-                    onChange={(e) => formik.setFieldValue('villeDepart', e.target.value)}
-                    error={formik.errors.villeDepart}
-                    touched={formik.touched.villeDepart}
+                  <Input
+                    id="adresseDepart.rue"
+                    name="adresseDepart.rue"
+                    label="Adresse"
+                    placeholder="Rue et numÈro"
+                    value={formik.values.adresseDepart.rue}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    error={formik.touched.adresseDepart?.rue && formik.errors.adresseDepart?.rue}
+                    touched={formik.touched.adresseDepart?.rue}
                     required
                   />
                   
-                  <CityAutoComplete
-                    name="villeArrivee"
-                    label="Ville d'arriv√©e"
-                    placeholder="Entrez la ville d'arriv√©e"
-                    value={formik.values.villeArrivee}
-                    onChange={(e) => formik.setFieldValue('villeArrivee', e.target.value)}
-                    error={formik.errors.villeArrivee}
-                    touched={formik.touched.villeArrivee}
+                  <Input
+                    id="adresseDepart.codePostal"
+                    name="adresseDepart.codePostal"
+                    label="Code postal"
+                    placeholder="Ex: 75001"
+                    value={formik.values.adresseDepart.codePostal}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    error={formik.touched.adresseDepart?.codePostal && formik.errors.adresseDepart?.codePostal}
+                    touched={formik.touched.adresseDepart?.codePostal}
                     required
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <Input
+                    id="adresseDepart.ville"
+                    name="adresseDepart.ville"
+                    label="Ville"
+                    placeholder="Ex: Paris"
+                    value={formik.values.adresseDepart.ville}
+                    onChange={(e) => {
+                      formik.handleChange(e);
+                      formik.setFieldValue('villeDepart', e.target.value);
+                    }}
+                    onBlur={formik.handleBlur}
+                    error={formik.touched.adresseDepart?.ville && formik.errors.adresseDepart?.ville}
+                    touched={formik.touched.adresseDepart?.ville}
+                    required
+                  />
+                  
+                  <Input
+                    id="adresseDepart.pays"
+                    name="adresseDepart.pays"
+                    label="Pays"
+                    placeholder="Ex: France"
+                    value={formik.values.adresseDepart.pays}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    error={formik.touched.adresseDepart?.pays && formik.errors.adresseDepart?.pays}
+                    touched={formik.touched.adresseDepart?.pays}
+                  />
+                </div>
+              </div>
+              
+              <div className="mt-8">
+                <h3 className="text-lg font-medium mb-3">Adresse d'arrivÈe</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input
+                    id="adresseArrivee.rue"
+                    name="adresseArrivee.rue"
+                    label="Adresse"
+                    placeholder="Rue et numÈro"
+                    value={formik.values.adresseArrivee.rue}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    error={formik.touched.adresseArrivee?.rue && formik.errors.adresseArrivee?.rue}
+                    touched={formik.touched.adresseArrivee?.rue}
+                    required
+                  />
+                  
+                  <Input
+                    id="adresseArrivee.codePostal"
+                    name="adresseArrivee.codePostal"
+                    label="Code postal"
+                    placeholder="Ex: 69001"
+                    value={formik.values.adresseArrivee.codePostal}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    error={formik.touched.adresseArrivee?.codePostal && formik.errors.adresseArrivee?.codePostal}
+                    touched={formik.touched.adresseArrivee?.codePostal}
+                    required
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <Input
+                    id="adresseArrivee.ville"
+                    name="adresseArrivee.ville"
+                    label="Ville"
+                    placeholder="Ex: Lyon"
+                    value={formik.values.adresseArrivee.ville}
+                    onChange={(e) => {
+                      formik.handleChange(e);
+                      formik.setFieldValue('villeArrivee', e.target.value);
+                    }}
+                    onBlur={formik.handleBlur}
+                    error={formik.touched.adresseArrivee?.ville && formik.errors.adresseArrivee?.ville}
+                    touched={formik.touched.adresseArrivee?.ville}
+                    required
+                  />
+                  
+                  <Input
+                    id="adresseArrivee.pays"
+                    name="adresseArrivee.pays"
+                    label="Pays"
+                    placeholder="Ex: France"
+                    value={formik.values.adresseArrivee.pays}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    error={formik.touched.adresseArrivee?.pays && formik.errors.adresseArrivee?.pays}
+                    touched={formik.touched.adresseArrivee?.pays}
                   />
                 </div>
               </div>
             </div>
           )}
 
-          {/* Etape 3: D√©tails et options */}
+          {/* Etape 3: DÈtails et options */}
           {step === 3 && (
             <div>
-              <h2 className="text-xl font-semibold mb-4">D√©tails du transport</h2>
+              <h2 className="text-xl font-semibold mb-4">DÈtails du transport</h2>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="form-group">
                   <label className="form-label">
-                    Date de d√©part souhait√©e
+                    Date de dÈpart souhaitÈe
                     <span className="text-red-500 ml-1">*</span>
                   </label>
                   <DatePicker
@@ -659,7 +526,7 @@ const CreateAnnoncePage = () => {
                     className="form-control"
                     dateFormat="dd/MM/yyyy"
                     minDate={new Date()}
-                    placeholderText="S√©lectionnez une date"
+                    placeholderText="SÈlectionnez une date"
                   />
                   {formik.touched.dateDepart && formik.errors.dateDepart && (
                     <p className="form-error">{formik.errors.dateDepart}</p>
@@ -668,7 +535,7 @@ const CreateAnnoncePage = () => {
                 
                 <div className="form-group">
                   <label className="form-label">
-                    Date d'arriv√©e souhait√©e
+                    Date d'arrivÈe souhaitÈe
                   </label>
                   <DatePicker
                     selected={formik.values.dateArrivee}
@@ -676,7 +543,7 @@ const CreateAnnoncePage = () => {
                     className="form-control"
                     dateFormat="dd/MM/yyyy"
                     minDate={formik.values.dateDepart || new Date()}
-                    placeholderText="S√©lectionnez une date"
+                    placeholderText="SÈlectionnez une date"
                   />
                 </div>
               </div>
@@ -692,14 +559,14 @@ const CreateAnnoncePage = () => {
                     onChange={formik.handleChange}
                   />
                   <label htmlFor="flexibiliteDate" className="ml-2 block text-sm text-gray-900">
-                    Je suis flexible sur les dates (¬± 2 jours)
+                    Je suis flexible sur les dates (± 2 jours)
                   </label>
                 </div>
               </div>
               
               <hr className="my-6" />
               
-              <h3 className="text-lg font-medium mb-4">Caract√©ristiques de l'envoi</h3>
+              <h3 className="text-lg font-medium mb-4">CaractÈristiques de l'envoi</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Input
@@ -717,7 +584,7 @@ const CreateAnnoncePage = () => {
                 
                 <div className="form-group">
                   <label htmlFor="unite_poids" className="form-label">
-                    Unit√© de poids
+                    UnitÈ de poids
                   </label>
                   <select
                     id="unite_poids"
@@ -735,7 +602,7 @@ const CreateAnnoncePage = () => {
                   id="volume"
                   name="volume"
                   type="number"
-                  label="Volume (m¬≥)"
+                  label="Volume (m≥)"
                   placeholder="Ex: 1.5"
                   value={formik.values.volume}
                   onChange={formik.handleChange}
@@ -745,7 +612,7 @@ const CreateAnnoncePage = () => {
                 />
               </div>
               
-              {['Colis', 'Palettes', 'Caisses/Cartons', 'Marchandise fragile'].includes(formik.values.typeTransport) && (
+              {['colis', 'meuble', 'marchandise', 'palette'].includes(formik.values.typeTransport) && (
                 <div className="mt-4">
                   <h4 className="text-md font-medium mb-2">Dimensions</h4>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -790,7 +657,7 @@ const CreateAnnoncePage = () => {
                     
                     <div className="form-group">
                       <label htmlFor="dimensions.unite" className="form-label">
-                        Unit√©
+                        UnitÈ
                       </label>
                       <select
                         id="dimensions.unite"
@@ -799,15 +666,15 @@ const CreateAnnoncePage = () => {
                         value={formik.values.dimensions.unite}
                         onChange={formik.handleChange}
                       >
-                        <option value="cm">Centim√®tres (cm)</option>
-                        <option value="m">M√®tres (m)</option>
+                        <option value="cm">CentimËtres (cm)</option>
+                        <option value="m">MËtres (m)</option>
                       </select>
                     </div>
                   </div>
                 </div>
               )}
               
-              {formik.values.typeTransport === 'Colis' && (
+              {formik.values.typeTransport === 'colis' && (
                 <div className="mt-4">
                   <Input
                     id="nombreColis"
@@ -826,12 +693,28 @@ const CreateAnnoncePage = () => {
               
               <div className="mt-4">
                 <Input
+                  id="valeurDeclaree"
+                  name="valeurDeclaree"
+                  type="number"
+                  label="Valeur dÈclarÈe (Ä)"
+                  placeholder="Ex: 200"
+                  helperText="Renseignez la valeur de vos biens pour l'assurance."
+                  value={formik.values.valeurDeclaree}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={formik.touched.valeurDeclaree && formik.errors.valeurDeclaree}
+                  touched={formik.touched.valeurDeclaree}
+                />
+              </div>
+              
+              <div className="mt-4">
+                <Input
                   id="budget"
                   name="budget"
                   type="number"
-                  label="Budget estim√© (DH)"
-                  placeholder="Ex: 1500"
-                  helperText="Facultatif. Indiquez votre budget pour recevoir des devis adapt√©s."
+                  label="Budget estimÈ (Ä)"
+                  placeholder="Ex: 150"
+                  helperText="Facultatif. Indiquez votre budget pour recevoir des devis adaptÈs."
                   value={formik.values.budget}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
@@ -848,12 +731,12 @@ const CreateAnnoncePage = () => {
                   className="text-teal-600 font-medium"
                   onClick={() => setShowOptions(!showOptions)}
                 >
-                  {showOptions ? '- Masquer les options suppl√©mentaires' : '+ Afficher les options suppl√©mentaires'}
+                  {showOptions ? '- Masquer les options supplÈmentaires' : '+ Afficher les options supplÈmentaires'}
                 </button>
                 
                 {showOptions && (
                   <div className="mt-4 bg-gray-50 p-4 rounded-md">
-                    <h3 className="text-lg font-medium mb-3">Options suppl√©mentaires</h3>
+                    <h3 className="text-lg font-medium mb-3">Options supplÈmentaires</h3>
                     
                     <div className="space-y-3">
                       <div className="flex items-center">
@@ -880,7 +763,7 @@ const CreateAnnoncePage = () => {
                           onChange={formik.handleChange}
                         />
                         <label htmlFor="optionsTransport.dechargement" className="ml-2 block text-sm text-gray-900">
-                          Aide au d√©chargement
+                          Aide au dÈchargement
                         </label>
                       </div>
                       
@@ -908,7 +791,7 @@ const CreateAnnoncePage = () => {
                           onChange={formik.handleChange}
                         />
                         <label htmlFor="optionsTransport.demontage" className="ml-2 block text-sm text-gray-900">
-                          D√©montage des meubles
+                          DÈmontage des meubles
                         </label>
                       </div>
                       
@@ -923,6 +806,20 @@ const CreateAnnoncePage = () => {
                         />
                         <label htmlFor="optionsTransport.emballage" className="ml-2 block text-sm text-gray-900">
                           Emballage des objets
+                        </label>
+                      </div>
+                      
+                      <div className="flex items-center">
+                        <input
+                          id="optionsTransport.assurance"
+                          name="optionsTransport.assurance"
+                          type="checkbox"
+                          className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
+                          checked={formik.values.optionsTransport.assurance}
+                          onChange={formik.handleChange}
+                        />
+                        <label htmlFor="optionsTransport.assurance" className="ml-2 block text-sm text-gray-900">
+                          Assurance complÈmentaire
                         </label>
                       </div>
                       
@@ -950,7 +847,7 @@ const CreateAnnoncePage = () => {
                           id="commentairesTransporteur"
                           name="commentairesTransporteur"
                           rows="3"
-                          placeholder="Ex: Code immeuble, √©tage, pr√©sence d'ascenseur, acc√®s difficile, etc."
+                          placeholder="Ex: Code immeuble, Ètage, prÈsence d'ascenseur, accËs difficile, etc."
                           className="form-control"
                           value={formik.values.commentairesTransporteur}
                           onChange={formik.handleChange}
@@ -969,7 +866,7 @@ const CreateAnnoncePage = () => {
             <div>
               <h2 className="text-xl font-semibold mb-4">Photos</h2>
               <p className="text-gray-600 mb-4">
-                Ajoutez des photos pour aider les transporteurs √† mieux √©valuer votre demande. (Max 5 photos, 5MB par photo)
+                Ajoutez des photos pour aider les transporteurs ‡ mieux Èvaluer votre demande. (Max 5 photos, 5MB par photo)
               </p>
               
               <div {...getRootProps({ className: 'border-2 border-dashed border-gray-300 rounded-md p-6 text-center cursor-pointer hover:border-teal-500' })}>
@@ -977,15 +874,15 @@ const CreateAnnoncePage = () => {
                 <div className="space-y-1 text-center">
                   <CameraIcon className="mx-auto h-12 w-12 text-gray-400" />
                   <div className="flex text-sm text-gray-600">
-                    <p className="pl-1">Glissez-d√©posez des photos ici, ou cliquez pour s√©lectionner des photos</p>
+                    <p className="pl-1">Glissez-dÈposez des photos ici, ou cliquez pour sÈlectionner des photos</p>
                   </div>
-                  <p className="text-xs text-gray-500">PNG, JPG, JPEG jusqu'√† 5MB</p>
+                  <p className="text-xs text-gray-500">PNG, JPG, JPEG jusqu'‡ 5MB</p>
                 </div>
               </div>
               
               {previewPhotos.length > 0 && (
                 <div className="mt-4">
-                  <h3 className="text-md font-medium mb-2">Photos s√©lectionn√©es</h3>
+                  <h3 className="text-md font-medium mb-2">Photos sÈlectionnÈes</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
                     {previewPhotos.map((photo, index) => (
                       <div key={index} className="relative">
@@ -1008,31 +905,36 @@ const CreateAnnoncePage = () => {
               )}
               
               <div className="mt-8 bg-gray-50 p-4 rounded-md">
-                <h3 className="text-lg font-medium mb-2">R√©capitulatif</h3>
+                <h3 className="text-lg font-medium mb-2">RÈcapitulatif</h3>
                 <p className="text-gray-600 mb-4">
-                  V√©rifiez les informations de votre annonce avant de la publier.
+                  VÈrifiez les informations de votre annonce avant de la publier.
                 </p>
                 
                 <div className="space-y-4">
                   <div>
                     <h4 className="text-sm font-bold text-gray-700">Type de transport</h4>
-                    <p>{formik.values.typeTransport || '-'}</p>
+                    <p>{formik.values.typeTransport === 'colis' ? 'Colis' : 
+                        formik.values.typeTransport === 'meuble' ? 'Meuble' : 
+                        formik.values.typeTransport === 'marchandise' ? 'Marchandise' :
+                        formik.values.typeTransport === 'palette' ? 'Palette' :
+                        formik.values.typeTransport === 'demenagement' ? 'DÈmÈnagement' :
+                        formik.values.typeTransport === 'vehicule' ? 'VÈhicule' : 'Autre'}</p>
                   </div>
                   
                   <div>
                     <h4 className="text-sm font-bold text-gray-700">Trajet</h4>
-                    <p>{formik.values.villeDepart} ‚Üí {formik.values.villeArrivee}</p>
+                    <p>{formik.values.adresseDepart.ville} ? {formik.values.adresseArrivee.ville}</p>
                   </div>
                   
                   <div>
-                    <h4 className="text-sm font-bold text-gray-700">Date de d√©part</h4>
+                    <h4 className="text-sm font-bold text-gray-700">Date de dÈpart</h4>
                     <p>{formik.values.dateDepart ? formik.values.dateDepart.toLocaleDateString('fr-FR') : '-'}</p>
                   </div>
                   
                   {formik.values.budget && (
                     <div>
                       <h4 className="text-sm font-bold text-gray-700">Budget</h4>
-                      <p>{formik.values.budget} DH</p>
+                      <p>{formik.values.budget} Ä</p>
                     </div>
                   )}
                 </div>
@@ -1040,18 +942,15 @@ const CreateAnnoncePage = () => {
             </div>
           )}
 
-          {/* Navigation des √©tapes - MODIFICATION: ajout de type="button" explicite et preventDefault */}
+          {/* Navigation des Ètapes */}
           <div className="mt-8 flex justify-between">
             {step > 1 ? (
               <Button
-                type="button" // Explicitement de type button
+                type="button"
                 variant="outline"
-                onClick={(e) => {
-                  e.preventDefault(); // Emp√™che toute soumission accidentelle
-                  prevStep();
-                }}
+                onClick={prevStep}
               >
-                Pr√©c√©dent
+                PrÈcÈdent
               </Button>
             ) : (
               <div></div>
@@ -1059,18 +958,15 @@ const CreateAnnoncePage = () => {
             
             {step < 4 ? (
               <Button
-                type="button" // Explicitement de type button
+                type="button"
                 variant="primary"
-                onClick={(e) => {
-                  e.preventDefault(); // Emp√™che toute soumission accidentelle
-                  nextStep();
-                }}
+                onClick={nextStep}
               >
                 Suivant
               </Button>
             ) : (
               <Button
-                type="submit" // Seul ce bouton est de type submit
+                type="submit"
                 variant="primary"
                 isLoading={isSubmitting}
                 disabled={isSubmitting}

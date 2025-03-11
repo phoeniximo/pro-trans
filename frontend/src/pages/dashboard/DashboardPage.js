@@ -15,6 +15,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import apiClient from '../../api/client';
 import Button from '../../components/ui/Button';
+import Avatar from '../../components/ui/Avatar';
 
 const DashboardPage = () => {
   const { user } = useAuth();
@@ -32,7 +33,7 @@ const DashboardPage = () => {
       try {
         setLoading(true);
         
-        // Endpoint différent selon le rôle de l'utilisateur
+        // Endpoint diffÃ©rent selon le rÃ´le de l'utilisateur
         const endpoint = user.role === 'transporteur' 
           ? '/dashboard/transporteur' 
           : '/dashboard/client';
@@ -49,8 +50,8 @@ const DashboardPage = () => {
         setError(null);
       } catch (err) {
         console.error('Erreur lors du chargement du tableau de bord:', err);
-        setError('Erreur lors du chargement des données. Veuillez réessayer.');
-        toast.error('Erreur lors du chargement des données');
+        setError('Erreur lors du chargement des donnÃ©es. Veuillez rÃ©essayer.');
+        toast.error('Erreur lors du chargement des donnÃ©es');
       } finally {
         setLoading(false);
       }
@@ -80,7 +81,7 @@ const DashboardPage = () => {
               className="mt-2" 
               onClick={() => window.location.reload()}
             >
-              Réessayer
+              RÃ©essayer
             </Button>
           </div>
         </div>
@@ -189,7 +190,7 @@ const DashboardPage = () => {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Avis Reçus</dt>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Avis ReÃ§us</dt>
                   <dd className="flex items-baseline">
                     <div className="text-2xl font-semibold text-gray-900">
                       {stats?.avis?.total || 0}
@@ -224,7 +225,7 @@ const DashboardPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Button to="/dashboard/annonces/create" variant="primary">
               <DocumentTextIcon className="h-5 w-5 mr-2" />
-              Créer une nouvelle annonce
+              CrÃ©er une nouvelle annonce
             </Button>
             <Button to="/transporteurs" variant="outline">
               <TruckIcon className="h-5 w-5 mr-2" />
@@ -234,18 +235,18 @@ const DashboardPage = () => {
         </div>
       </div>
 
-      {/* Dernières annonces */}
+      {/* DerniÃ¨res annonces */}
       <div className="bg-white shadow rounded-lg overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Mes dernières annonces</h3>
+          <h3 className="text-lg font-medium text-gray-900">Mes derniÃ¨res annonces</h3>
         </div>
         <div className="divide-y divide-gray-200">
           {recentItems.annonces.length === 0 ? (
             <div className="px-6 py-8 text-center text-gray-500">
               <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
-              <p className="mt-2 text-sm">Vous n'avez pas encore créé d'annonce.</p>
+              <p className="mt-2 text-sm">Vous n'avez pas encore crÃ©Ã© d'annonce.</p>
               <Button to="/dashboard/annonces/create" variant="primary" className="mt-3">
-                Créer ma première annonce
+                CrÃ©er ma premiÃ¨re annonce
               </Button>
             </div>
           ) : (
@@ -260,7 +261,7 @@ const DashboardPage = () => {
                       {annonce.titre}
                     </Link>
                     <p className="mt-1 text-sm text-gray-500">
-                      {annonce.villeDepart} ? {annonce.villeArrivee}
+                      {annonce.villeDepart} â†’ {annonce.villeArrivee}
                     </p>
                   </div>
                   <div className="flex flex-col items-end">
@@ -275,7 +276,7 @@ const DashboardPage = () => {
                         ? 'Disponible' 
                         : annonce.statut === 'en_cours' 
                           ? 'En cours' 
-                          : 'Terminée'}
+                          : 'TerminÃ©e'}
                     </span>
                     <span className="mt-1 text-xs text-gray-500">
                       {format(new Date(annonce.dateDepart), 'dd MMMM yyyy', { locale: fr })}
@@ -307,9 +308,9 @@ const DashboardPage = () => {
           {recentItems.devis.length === 0 ? (
             <div className="px-6 py-8 text-center text-gray-500">
               <TruckIcon className="mx-auto h-12 w-12 text-gray-400" />
-              <p className="mt-2 text-sm">Vous n'avez pas encore reçu de devis.</p>
+              <p className="mt-2 text-sm">Vous n'avez pas encore reÃ§u de devis.</p>
               <Button to="/dashboard/annonces/create" variant="primary" className="mt-3">
-                Créer une annonce pour recevoir des devis
+                CrÃ©er une annonce pour recevoir des devis
               </Button>
             </div>
           ) : (
@@ -329,7 +330,7 @@ const DashboardPage = () => {
                   </div>
                   <div className="flex flex-col items-end">
                     <span className="text-lg font-bold text-gray-900">
-                      {devis.montant.toFixed(2)} €
+                      {devis.montant.toFixed(2)} â‚¬
                     </span>
                     <span className={`mt-1 px-2 py-1 text-xs font-medium rounded-full ${
                       devis.statut === 'en_attente' 
@@ -341,8 +342,8 @@ const DashboardPage = () => {
                       {devis.statut === 'en_attente' 
                         ? 'En attente' 
                         : devis.statut === 'accepte' 
-                          ? 'Accepté' 
-                          : 'Refusé'}
+                          ? 'AcceptÃ©' 
+                          : 'RefusÃ©'}
                     </span>
                   </div>
                 </div>
@@ -378,7 +379,7 @@ const DashboardPage = () => {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Devis Envoyés</dt>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Devis EnvoyÃ©s</dt>
                   <dd className="flex items-baseline">
                     <div className="text-2xl font-semibold text-gray-900">
                       {stats?.devis?.envoyes || 0}
@@ -465,7 +466,7 @@ const DashboardPage = () => {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Avis Reçus</dt>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Avis ReÃ§us</dt>
                   <dd className="flex items-baseline">
                     <div className="text-2xl font-semibold text-gray-900">
                       {stats?.avis?.total || 0}
@@ -504,16 +505,16 @@ const DashboardPage = () => {
             </Button>
             <Button to="/dashboard/profile" variant="outline">
               <TruckIcon className="h-5 w-5 mr-2" />
-              Mettre à jour mon profil
+              Mettre Ã  jour mon profil
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Dernières annonces disponibles */}
+      {/* DerniÃ¨res annonces disponibles */}
       <div className="bg-white shadow rounded-lg overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Dernières annonces disponibles</h3>
+          <h3 className="text-lg font-medium text-gray-900">DerniÃ¨res annonces disponibles</h3>
         </div>
         <div className="divide-y divide-gray-200">
           {recentItems.annonces.length === 0 ? (
@@ -536,7 +537,7 @@ const DashboardPage = () => {
                       {annonce.titre}
                     </Link>
                     <p className="mt-1 text-sm text-gray-500">
-                      {annonce.villeDepart} ? {annonce.villeArrivee}
+                      {annonce.villeDepart} â†’ {annonce.villeArrivee}
                     </p>
                   </div>
                   <div className="flex flex-col items-end">
@@ -573,7 +574,7 @@ const DashboardPage = () => {
           {recentItems.devis.length === 0 ? (
             <div className="px-6 py-8 text-center text-gray-500">
               <TruckIcon className="mx-auto h-12 w-12 text-gray-400" />
-              <p className="mt-2 text-sm">Vous n'avez pas encore envoyé de devis.</p>
+              <p className="mt-2 text-sm">Vous n'avez pas encore envoyÃ© de devis.</p>
               <Button to="/annonces" variant="primary" className="mt-3">
                 Rechercher des annonces pour proposer vos services
               </Button>
@@ -595,7 +596,7 @@ const DashboardPage = () => {
                   </div>
                   <div className="flex flex-col items-end">
                     <span className="text-lg font-bold text-gray-900">
-                      {devis.montant.toFixed(2)} €
+                      {devis.montant.toFixed(2)} â‚¬
                     </span>
                     <span className={`mt-1 px-2 py-1 text-xs font-medium rounded-full ${
                       devis.statut === 'en_attente' 
@@ -607,8 +608,8 @@ const DashboardPage = () => {
                       {devis.statut === 'en_attente' 
                         ? 'En attente' 
                         : devis.statut === 'accepte' 
-                          ? 'Accepté' 
-                          : 'Refusé'}
+                          ? 'AcceptÃ©' 
+                          : 'RefusÃ©'}
                     </span>
                   </div>
                 </div>
@@ -636,19 +637,22 @@ const DashboardPage = () => {
       
       {/* Message de bienvenue */}
       <div className="bg-white shadow rounded-lg overflow-hidden mb-6">
-        <div className="px-6 py-4">
-          <h2 className="text-xl font-medium text-gray-900">
-            Bienvenue, {user.prenom} !
-          </h2>
-          <p className="mt-1 text-gray-600">
-            {user.role === 'client' 
-              ? 'Voici un aperçu de vos activités et des outils pour gérer vos transports.' 
-              : 'Voici un aperçu de vos activités et des opportunités de transport disponibles.'}
-          </p>
+        <div className="px-6 py-4 flex items-center">
+          <Avatar user={user} size="lg" className="mr-4" />
+          <div>
+            <h2 className="text-xl font-medium text-gray-900">
+              Bienvenue, {user.prenom} !
+            </h2>
+            <p className="mt-1 text-gray-600">
+              {user.role === 'client' 
+                ? 'Voici un aperÃ§u de vos activitÃ©s et des outils pour gÃ©rer vos transports.' 
+                : 'Voici un aperÃ§u de vos activitÃ©s et des opportunitÃ©s de transport disponibles.'}
+            </p>
+          </div>
         </div>
       </div>
       
-      {/* Afficher le contenu spécifique au rôle */}
+      {/* Afficher le contenu spÃ©cifique au rÃ´le */}
       {user.role === 'client' ? <ClientDashboard /> : <TransporteurDashboard />}
     </div>
   );

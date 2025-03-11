@@ -6,7 +6,7 @@ const { protect } = require('../middleware/auth');
 
 // Vérification des fonctions de contrôleur
 // Si certaines fonctions ne sont pas définies dans le contrôleur, créez des fonctions temporaires
-const getMyConversations = messageController.getMyConversations || ((req, res) => {
+const getMyConversations = messageController.getConversations || ((req, res) => {
   res.status(501).json({ 
     success: false, 
     message: "Cette fonctionnalité n'est pas encore implémentée" 
@@ -20,7 +20,7 @@ const getConversation = messageController.getConversation || ((req, res) => {
   });
 });
 
-const markAsRead = messageController.markAsRead || ((req, res) => {
+const markAsRead = messageController.markMessagesAsRead || ((req, res) => {
   res.status(501).json({ 
     success: false, 
     message: "Cette fonctionnalité n'est pas encore implémentée" 

@@ -19,7 +19,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 import Button from '../../../components/ui/Button';
-import apiClient from '../../../api/client';
+import devisService from '../../../services/devisService';
 import { useAuth } from '../../../hooks/useAuth';
 import { STATUT_DEVIS_COLORS, STATUT_DEVIS_LABELS } from '../../../utils/constants';
 
@@ -46,23 +46,32 @@ const MesDevisPage = () => {
       try {
         setLoading(true);
         
-        const endpoint = user.role === 'transporteur' 
-          ? '/devis/mes-devis' 
-          : '/devis/recus';
-        
         const params = {
           page: currentPage,
           limit: 10,
           ...filters
         };
         
-        const response = await apiClient.get(endpoint, { params });
-        setDevis(response.data.data);
-        setTotalPages(response.data.totalPages || 1);
-        setError(null);
+        let response;
+        if (user.role === 'transporteur') {
+          // Utiliser le service pour les transporteurs
+          response = await devisService.getMesDevisEnvoyes(params);
+        } else {
+          // Utiliser le service pour les clients
+          response = await devisService.getMesDevisRecus(params);
+        }
+        
+        // VÃ©rifier si la rÃ©ponse contient les donnÃ©es attendues
+        if (response && response.data) {
+          setDevis(response.data);
+          setTotalPages(response.pages || 1);
+          setError(null);
+        } else {
+          throw new Error('Format de rÃ©ponse inattendu');
+        }
       } catch (err) {
         console.error('Erreur lors du chargement des devis:', err);
-        setError('Erreur lors du chargement des devis. Veuillez réessayer.');
+        setError('Erreur lors du chargement des devis. Veuillez rÃ©essayer.');
         toast.error('Erreur lors du chargement des devis');
       } finally {
         setLoading(false);
@@ -72,13 +81,13 @@ const MesDevisPage = () => {
     fetchDevis();
   }, [user.role, currentPage, filters]);
 
-  // Rafraîchir les devis
+  // RafraÃ®chir les devis
   const refreshDevis = () => {
     setCurrentPage(1);
-    fetchDevis();
+    // La fonction sera exÃ©cutÃ©e automatiquement grÃ¢ce Ã  l'effet
   };
 
-  // Gérer le changement de page
+  // GÃ©rer le changement de page
   const handlePageChange = (newPage) => {
     if (newPage > 0 && newPage <= totalPages) {
       setCurrentPage(newPage);
@@ -90,7 +99,7 @@ const MesDevisPage = () => {
     setCurrentPage(1);
   };
 
-  // Réinitialiser les filtres
+  // RÃ©initialiser les filtres
   const resetFilters = () => {
     setFilters({
       statut: '',
@@ -104,10 +113,10 @@ const MesDevisPage = () => {
   // Accepter un devis (pour les clients)
   const handleAcceptDevis = async (devisId) => {
     try {
-      await apiClient.put(`/devis/${devisId}/accepter`);
-      toast.success('Devis accepté avec succès');
+      await devisService.accepterDevis(devisId);
+      toast.success('Devis acceptÃ© avec succÃ¨s');
       
-      // Mettre à jour la liste des devis
+      // Mettre Ã  jour la liste des devis
       setDevis(prevDevis => 
         prevDevis.map(d => 
           d._id === devisId ? { ...d, statut: 'accepte' } : d
@@ -122,12 +131,10 @@ const MesDevisPage = () => {
   // Refuser un devis (pour les clients)
   const handleRefuseDevis = async (devisId) => {
     try {
-      await apiClient.put(`/devis/${devisId}/refuser`, { 
-        raison: 'Refusé par le client' 
-      });
-      toast.success('Devis refusé avec succès');
+      await devisService.refuserDevis(devisId, 'RefusÃ© par le client');
+      toast.success('Devis refusÃ© avec succÃ¨s');
       
-      // Mettre à jour la liste des devis
+      // Mettre Ã  jour la liste des devis
       setDevis(prevDevis => 
         prevDevis.map(d => 
           d._id === devisId ? { ...d, statut: 'refuse' } : d
@@ -142,12 +149,10 @@ const MesDevisPage = () => {
   // Annuler un devis (pour les transporteurs)
   const handleCancelDevis = async (devisId) => {
     try {
-      await apiClient.put(`/devis/${devisId}/annuler`, { 
-        raison: 'Annulé par le transporteur' 
-      });
-      toast.success('Devis annulé avec succès');
+      await devisService.annulerDevis(devisId, 'AnnulÃ© par le transporteur');
+      toast.success('Devis annulÃ© avec succÃ¨s');
       
-      // Mettre à jour la liste des devis
+      // Mettre Ã  jour la liste des devis
       setDevis(prevDevis => 
         prevDevis.map(d => 
           d._id === devisId ? { ...d, statut: 'annule' } : d
@@ -163,7 +168,7 @@ const MesDevisPage = () => {
     <div className="max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">
-          {user.role === 'transporteur' ? 'Mes devis envoyés' : 'Devis reçus'}
+          {user.role === 'transporteur' ? 'Mes devis envoyÃ©s' : 'Devis reÃ§us'}
         </h1>
         <div className="flex space-x-3">
           <Button
@@ -212,18 +217,18 @@ const MesDevisPage = () => {
               >
                 <option value="">Tous les statuts</option>
                 <option value="en_attente">En attente</option>
-                <option value="accepte">Accepté</option>
-                <option value="refuse">Refusé</option>
-                <option value="annule">Annulé</option>
-                <option value="expire">Expiré</option>
+                <option value="accepte">AcceptÃ©</option>
+                <option value="refuse">RefusÃ©</option>
+                <option value="annule">AnnulÃ©</option>
+                <option value="expire">ExpirÃ©</option>
                 <option value="en_cours">En cours</option>
-                <option value="termine">Terminé</option>
+                <option value="termine">TerminÃ©</option>
               </select>
             </div>
             
             <div>
               <label htmlFor="dateDebut" className="block text-sm font-medium text-gray-700 mb-1">
-                Date de début
+                Date de dÃ©but
               </label>
               <input
                 type="date"
@@ -260,10 +265,10 @@ const MesDevisPage = () => {
                 value={filters.tri}
                 onChange={(e) => setFilters({ ...filters, tri: e.target.value })}
               >
-                <option value="recent">Plus récents</option>
+                <option value="recent">Plus rÃ©cents</option>
                 <option value="ancien">Plus anciens</option>
                 <option value="montant_asc">Montant croissant</option>
-                <option value="montant_desc">Montant décroissant</option>
+                <option value="montant_desc">Montant dÃ©croissant</option>
               </select>
             </div>
           </div>
@@ -273,7 +278,7 @@ const MesDevisPage = () => {
               variant="outline"
               onClick={resetFilters}
             >
-              Réinitialiser
+              RÃ©initialiser
             </Button>
             <Button
               variant="primary"
@@ -302,7 +307,7 @@ const MesDevisPage = () => {
                 className="mt-2"
                 onClick={refreshDevis}
               >
-                Réessayer
+                RÃ©essayer
               </Button>
             </div>
           </div>
@@ -312,19 +317,19 @@ const MesDevisPage = () => {
           <DocumentTextIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
             {user.role === 'transporteur' 
-              ? 'Vous n\'avez pas encore envoyé de devis' 
-              : 'Vous n\'avez pas encore reçu de devis'}
+              ? 'Vous n\'avez pas encore envoyÃ© de devis' 
+              : 'Vous n\'avez pas encore reÃ§u de devis'}
           </h3>
           <p className="text-gray-500 mb-6">
             {user.role === 'transporteur' 
               ? 'Parcourez les annonces pour proposer vos services de transport.' 
-              : 'Créez une annonce pour recevoir des devis de transporteurs.'}
+              : 'CrÃ©ez une annonce pour recevoir des devis de transporteurs.'}
           </p>
           <Button
             to={user.role === 'transporteur' ? '/annonces' : '/dashboard/annonces/create'}
             variant="primary"
           >
-            {user.role === 'transporteur' ? 'Parcourir les annonces' : 'Créer une annonce'}
+            {user.role === 'transporteur' ? 'Parcourir les annonces' : 'CrÃ©er une annonce'}
           </Button>
         </div>
       ) : (
@@ -363,7 +368,7 @@ const MesDevisPage = () => {
                       </div>
                       <div className="flex flex-col items-end space-y-1">
                         <span className="text-2xl font-bold text-gray-900">
-                          {devis.montant.toFixed(2)} €
+                          {devis.montant.toFixed(2)} â‚¬
                         </span>
                         <span className={`px-2 py-1 inline-flex text-xs font-medium rounded-full ${STATUT_DEVIS_COLORS[devis.statut]}`}>
                           {STATUT_DEVIS_LABELS[devis.statut]}
@@ -381,7 +386,7 @@ const MesDevisPage = () => {
                           <p className="text-sm font-medium text-gray-900">{annonce.titre}</p>
                           <p className="text-xs text-gray-500 flex items-center mt-1">
                             <MapPinIcon className="h-4 w-4 text-gray-400 mr-1" />
-                            {annonce.villeDepart} ? {annonce.villeArrivee}
+                            {annonce.villeDepart} â†’ {annonce.villeArrivee}
                           </p>
                         </div>
                       </div>
@@ -393,13 +398,13 @@ const MesDevisPage = () => {
                         </div>
                         <div className="mt-1.5 grid grid-cols-2 gap-2">
                           <div>
-                            <p className="text-xs text-gray-500">Départ demandé</p>
+                            <p className="text-xs text-gray-500">DÃ©part demandÃ©</p>
                             <p className="text-sm text-gray-900">
                               {format(new Date(annonce.dateDepart), 'dd MMM yyyy', { locale: fr })}
                             </p>
                           </div>
                           <div>
-                            <p className="text-xs text-gray-500">Livraison estimée</p>
+                            <p className="text-xs text-gray-500">Livraison estimÃ©e</p>
                             <p className="text-sm text-gray-900">
                               {format(new Date(devis.delaiLivraison), 'dd MMM yyyy', { locale: fr })}
                             </p>
@@ -411,7 +416,7 @@ const MesDevisPage = () => {
                     <div className="mt-4">
                       <div className="flex items-center">
                         <div className="flex-1 text-sm text-gray-500">
-                          Devis créé le {format(new Date(devis.createdAt), 'dd MMMM yyyy', { locale: fr })}
+                          Devis crÃ©Ã© le {format(new Date(devis.createdAt), 'dd MMMM yyyy', { locale: fr })}
                         </div>
                         <div className="flex space-x-2">
                           <Button
@@ -419,10 +424,10 @@ const MesDevisPage = () => {
                             variant="outline"
                             size="sm"
                           >
-                            Voir les détails
+                            Voir les dÃ©tails
                           </Button>
                           
-                          {/* Boutons d'action basés sur le rôle et le statut */}
+                          {/* Boutons d'action basÃ©s sur le rÃ´le et le statut */}
                           {user.role === 'client' && devis.statut === 'en_attente' && (
                             <>
                               <Button
@@ -471,7 +476,7 @@ const MesDevisPage = () => {
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
             >
-              Précédent
+              PrÃ©cÃ©dent
             </Button>
             <Button
               variant="outline"
@@ -494,13 +499,13 @@ const MesDevisPage = () => {
                   disabled={currentPage === 1}
                   className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <span className="sr-only">Précédent</span>
+                  <span className="sr-only">PrÃ©cÃ©dent</span>
                   <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
                 </button>
                 
                 {[...Array(totalPages)].map((_, i) => {
                   const pageNumber = i + 1;
-                  // Afficher la première page, la dernière, et les pages autour de la page courante
+                  // Afficher la premiÃ¨re page, la derniÃ¨re, et les pages autour de la page courante
                   if (
                     pageNumber === 1 ||
                     pageNumber === totalPages ||

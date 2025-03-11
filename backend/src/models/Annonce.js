@@ -9,12 +9,29 @@ const annonceSchema = new mongoose.Schema({
   },
   description: {
     type: String,
-    required: [true, 'La description est obligatoire'],
-    minlength: [20, 'Minimum 20 caractères']
   },
   typeTransport: {
     type: String,
-    enum: ['colis', 'meuble', 'marchandise', 'palette', 'demenagement', 'vehicule', 'autre'],
+    enum: [
+      'colis', 
+      'meuble', 
+      'marchandise', 
+      'palette', 
+      'demenagement', 
+      'vehicule', 
+      'autre',
+      'bagages',
+      'motos_velos',
+      'pieces_automobile',
+      'marchandise_fragile',
+      'voitures',
+      'Machine_equipement',
+      'materiels_vrac',
+      'materiel_hors_gabarit',
+      'autres_vehicules',
+      'bateaux',
+      'autres_livraisons'
+    ],
     required: [true, 'Le type de transport est obligatoire']
   },
   villeDepart: {

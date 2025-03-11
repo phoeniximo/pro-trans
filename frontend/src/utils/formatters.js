@@ -1,22 +1,41 @@
 // frontend/src/utils/formatters.js
-import { format, parseISO, formatDistance as dateFnsFormatDistance, formatDistanceToNow } from 'date-fns';
+import { format, parseISO, formatDistance as dateFnsFormatDistance, formatDistanceToNow, isValid } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 /**
- * Formatage de date au format français
+ * Formatage de date au format français avec gestion robuste des erreurs
  * @param {string|Date} date - Date à formater
  * @param {string} formatStr - Format de date (ex: 'dd/MM/yyyy')
  * @returns {string} - Date formatée
  */
 export const formatDate = (date, formatStr = 'dd/MM/yyyy') => {
-  if (!date) return '';
+  if (!date) return 'Date non spécifiée';
   
   try {
-    const dateObj = typeof date === 'string' ? parseISO(date) : date;
+    // Traiter la date différemment selon son type
+    let dateObj;
+    if (typeof date === 'string') {
+      // Pour les chaînes ISO
+      if (date.includes('T') || date.includes('-')) {
+        dateObj = parseISO(date);
+      } else {
+        // Pour d'autres formats de chaîne
+        dateObj = new Date(date);
+      }
+    } else {
+      dateObj = date;
+    }
+    
+    // Vérifier que la date est valide - méthode plus robuste
+    if (!isValid(dateObj) || isNaN(dateObj.getTime())) {
+      console.error('Date invalide:', date);
+      return 'Date non spécifiée';
+    }
+    
     return format(dateObj, formatStr, { locale: fr });
   } catch (error) {
-    console.error('Erreur de formatage de date:', error);
-    return '';
+    console.error('Erreur de formatage de date:', error, date);
+    return 'Date non disponible';
   }
 };
 

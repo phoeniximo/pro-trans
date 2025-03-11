@@ -2,6 +2,8 @@
 const Annonce = require('../models/Annonce');
 const Devis = require('../models/Devis');
 const mongoose = require('mongoose');
+const path = require('path');
+const fs = require('fs');
 
 // @desc    Récupérer toutes les annonces
 // @route   GET /api/annonces
@@ -294,7 +296,7 @@ exports.supprimerAnnonce = async (req, res) => {
 };
 
 // @desc    Récupérer mes annonces
-// @route   GET /api/annonces/mes-annonces
+// @route   GET /api/annonces/user/mes-annonces
 // @access  Privé
 exports.getMesAnnonces = async (req, res) => {
   try {
@@ -337,6 +339,100 @@ exports.getMesAnnonces = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération de vos annonces',
+      error: err.message
+    });
+  }
+};
+
+// @desc    Uploader des photos pour une annonce
+// @route   POST /api/annonces/:id/upload
+// @access  Privé
+exports.uploadPhotos = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Vérifier si l'ID est valide
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID d\'annonce invalide'
+      });
+    }
+
+    // Vérifier si l'annonce existe
+    const annonce = await Annonce.findById(id);
+    
+    if (!annonce) {
+      return res.status(404).json({
+        success: false,
+        message: 'Annonce non trouvée'
+      });
+    }
+    
+    // Vérifier si l'utilisateur est le propriétaire de l'annonce
+    if (annonce.utilisateur.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Vous n\'êtes pas autorisé à modifier cette annonce'
+      });
+    }
+
+    // Gérer l'upload des fichiers
+    if (!req.files || Object.keys(req.files).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Aucun fichier téléchargé'
+      });
+    }
+
+    const uploadedFiles = [];
+    const uploadDir = path.join(__dirname, '../../uploads');
+
+    // Créer le dossier d'uploads s'il n'existe pas
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    // Fonction pour gérer l'upload d'un fichier
+    const uploadFile = async (file) => {
+      const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+      const filePath = path.join(uploadDir, fileName);
+      
+      await file.mv(filePath);
+      
+      // Chemin relatif pour la base de données
+      return `/uploads/${fileName}`;
+    };
+
+    // Gérer upload multiple
+    if (Array.isArray(req.files.photos)) {
+      for (const file of req.files.photos) {
+        const filePath = await uploadFile(file);
+        uploadedFiles.push(filePath);
+      }
+    } else {
+      // Gérer upload simple
+      const filePath = await uploadFile(req.files.photos);
+      uploadedFiles.push(filePath);
+    }
+
+    // Mettre à jour l'annonce avec les chemins des photos
+    annonce.photos = [...(annonce.photos || []), ...uploadedFiles];
+    await annonce.save();
+
+    res.json({
+      success: true,
+      message: 'Photos téléchargées avec succès',
+      data: {
+        photos: annonce.photos
+      }
+    });
+    
+  } catch (err) {
+    console.error('Erreur lors de l\'upload des photos:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de l\'upload des photos',
       error: err.message
     });
   }

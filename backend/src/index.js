@@ -2,6 +2,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const fileUpload = require('express-fileupload');
+const path = require('path');
 const connectDB = require('./config/database');
 
 // Import des routes
@@ -27,6 +29,15 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Middleware pour l'upload de fichiers
+app.use(fileUpload({
+  limits: { fileSize: 5 * 1024 * 1024 }, // Limite à 5MB
+  createParentPath: true
+}));
+
+// Servir les fichiers statiques
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Connexion à MongoDB
 connectDB();

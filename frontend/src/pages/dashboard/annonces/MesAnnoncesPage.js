@@ -16,6 +16,7 @@ import annonceService from '../../../services/annonceService';
 import Button from '../../../components/ui/Button';
 import { STATUT_ANNONCE_LABELS, STATUT_ANNONCE_COLORS } from '../../../utils/constants';
 import { formatDate } from '../../../utils/formatters';
+import Avatar from '../../../components/ui/Avatar';
 
 const MesAnnoncesPage = () => {
   const [annonces, setAnnonces] = useState([]);
@@ -36,19 +37,62 @@ const MesAnnoncesPage = () => {
       try {
         setLoading(true);
         
-        // Pr�paration des filtres
+        // Préparation des filtres
         const filters = { page };
         if (filter !== 'all') {
           filters.statut = filter;
         }
         
+        console.log('Récupération des annonces avec filtres:', filters);
+        
         const response = await annonceService.getMesAnnonces(filters);
-        setAnnonces(response.data.data);
-        setTotalPages(response.data.pages);
+        console.log('Réponse complète getMesAnnonces:', response);
+        
+        // Vérification de la structure de réponse attendue
+        if (response.success === false) {
+          console.error('Réponse d\'erreur:', response);
+          setError(response.message || 'Erreur lors du chargement des annonces');
+          setAnnonces([]);
+          toast.error(response.message || 'Erreur lors du chargement des annonces');
+          return;
+        }
+        
+        // Vérification plus robuste de la structure de réponse
+        if (response && response.data) {
+          console.log('Annonces récupérées:', response.data);
+          setAnnonces(response.data.data || response.data);
+          setTotalPages(response.data.pages || response.pages || 1);
+        } else {
+          // Si la réponse n'a pas la structure attendue, initialiser avec des valeurs par défaut
+          console.warn('Structure de réponse inattendue:', response);
+          
+          // Tenter d'extraire les données quand même
+          if (Array.isArray(response)) {
+            console.log('Réponse est un tableau:', response);
+            setAnnonces(response);
+            setTotalPages(1);
+          } else {
+            setAnnonces([]);
+            setTotalPages(1);
+          }
+        }
+        
         setError(null);
       } catch (err) {
         console.error('Erreur lors du chargement des annonces:', err);
+        
+        // Logs détaillés pour déboguer
+        if (err.response) {
+          console.error('Données de réponse d\'erreur:', err.response.data);
+          console.error('Statut de l\'erreur:', err.response.status);
+        } else if (err.request) {
+          console.error('Pas de réponse du serveur:', err.request);
+        } else {
+          console.error('Erreur de configuration:', err.message);
+        }
+        
         setError('Impossible de charger vos annonces');
+        setAnnonces([]); // Initialiser avec un tableau vide en cas d'erreur
         toast.error('Erreur lors du chargement des annonces');
       } finally {
         setLoading(false);
@@ -58,13 +102,13 @@ const MesAnnoncesPage = () => {
     fetchAnnonces();
   }, [page, filter]);
 
-  // G�rer le changement de filtre
+  // Gérer le changement de filtre
   const handleFilterChange = (newFilter) => {
     setFilter(newFilter);
-    setPage(1); // R�initialiser la pagination lors du changement de filtre
+    setPage(1); // Réinitialiser la pagination lors du changement de filtre
   };
 
-  // G�rer la suppression d'une annonce
+  // Gérer la suppression d'une annonce
   const handleDelete = async () => {
     if (!annonceToDelete) return;
     
@@ -72,9 +116,9 @@ const MesAnnoncesPage = () => {
       setDeleting(true);
       await annonceService.deleteAnnonce(annonceToDelete);
       
-      // Rafra�chir la liste des annonces
+      // Rafraîchir la liste des annonces
       setAnnonces(annonces.filter(annonce => annonce._id !== annonceToDelete));
-      toast.success('Annonce supprim�e avec succ�s');
+      toast.success('Annonce supprimée avec succès');
       
       // Fermer le modal
       setShowDeleteModal(false);
@@ -97,6 +141,42 @@ const MesAnnoncesPage = () => {
     );
   };
 
+  // Fonction pour actualiser les annonces
+  const refreshAnnonces = async () => {
+    try {
+      setLoading(true);
+      setPage(1);
+      
+      const filters = { page: 1 };
+      if (filter !== 'all') {
+        filters.statut = filter;
+      }
+      
+      console.log('Rafraîchissement des annonces avec filtres:', filters);
+      const response = await annonceService.getMesAnnonces(filters);
+      console.log('Réponse du rafraîchissement:', response);
+      
+      // Traitement similaire à celui de useEffect
+      if (response && response.data) {
+        setAnnonces(response.data.data || response.data);
+        setTotalPages(response.data.pages || response.pages || 1);
+        setError(null);
+        toast.success('Annonces actualisées');
+      } else {
+        setAnnonces([]);
+        setTotalPages(1);
+        console.warn('Format de réponse inattendu lors du rafraîchissement:', response);
+      }
+    } catch (err) {
+      console.error('Erreur lors du rafraîchissement des annonces:', err);
+      setError('Impossible de charger vos annonces');
+      setAnnonces([]);
+      toast.error('Erreur lors du rafraîchissement des annonces');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="md:flex md:items-center md:justify-between mb-6">
@@ -105,37 +185,13 @@ const MesAnnoncesPage = () => {
             Mes annonces
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            G�rez vos demandes de transport
+            Gérez vos demandes de transport
           </p>
         </div>
         <div className="mt-4 flex md:mt-0 md:ml-4">
           <Button
             variant="outline"
-            onClick={() => {
-              setPage(1);
-              const fetchAnnonces = async () => {
-                try {
-                  setLoading(true);
-                  const filters = { page: 1 };
-                  if (filter !== 'all') {
-                    filters.statut = filter;
-                  }
-                  
-                  const response = await annonceService.getMesAnnonces(filters);
-                  setAnnonces(response.data.data);
-                  setTotalPages(response.data.pages);
-                  setError(null);
-                  toast.success('Annonces actualis�es');
-                } catch (err) {
-                  console.error('Erreur lors du chargement des annonces:', err);
-                  setError('Impossible de charger vos annonces');
-                  toast.error('Erreur lors du chargement des annonces');
-                } finally {
-                  setLoading(false);
-                }
-              };
-              fetchAnnonces();
-            }}
+            onClick={refreshAnnonces}
             className="mr-3"
           >
             <ArrowPathIcon className="h-5 w-5 mr-1" />
@@ -202,7 +258,7 @@ const MesAnnoncesPage = () => {
             }`}
             onClick={() => handleFilterChange('termine')}
           >
-            Termin�es
+            Terminées
           </button>
           <button
             className={`px-3 py-1 rounded-md text-sm font-medium ${
@@ -212,7 +268,7 @@ const MesAnnoncesPage = () => {
             }`}
             onClick={() => handleFilterChange('annule')}
           >
-            Annul�es
+            Annulées
           </button>
         </div>
       </div>
@@ -233,36 +289,13 @@ const MesAnnoncesPage = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => {
-                  setPage(1);
-                  const fetchAnnonces = async () => {
-                    try {
-                      setLoading(true);
-                      const filters = { page: 1 };
-                      if (filter !== 'all') {
-                        filters.statut = filter;
-                      }
-                      
-                      const response = await annonceService.getMesAnnonces(filters);
-                      setAnnonces(response.data.data);
-                      setTotalPages(response.data.pages);
-                      setError(null);
-                    } catch (err) {
-                      console.error('Erreur lors du chargement des annonces:', err);
-                      setError('Impossible de charger vos annonces');
-                      toast.error('Erreur lors du chargement des annonces');
-                    } finally {
-                      setLoading(false);
-                    }
-                  };
-                  fetchAnnonces();
-                }}
+                onClick={refreshAnnonces}
               >
-                R�essayer
+                Réessayer
               </Button>
             </div>
           </div>
-        ) : annonces.length === 0 ? (
+        ) : !annonces || annonces.length === 0 ? (
           <div className="px-4 py-12 text-center">
             <svg
               className="mx-auto h-12 w-12 text-gray-400"
@@ -281,7 +314,7 @@ const MesAnnoncesPage = () => {
             </svg>
             <h3 className="mt-2 text-sm font-medium text-gray-900">Aucune annonce</h3>
             <p className="mt-1 text-sm text-gray-500">
-              Commencez par cr�er une nouvelle annonce.
+              Commencez par créer une nouvelle annonce.
             </p>
             <div className="mt-6">
               <Button
@@ -381,7 +414,7 @@ const MesAnnoncesPage = () => {
                           <Link 
                             to={`/dashboard/annonces/${annonce._id}`}
                             className="text-gray-600 hover:text-gray-900"
-                            title="Voir les d�tails"
+                            title="Voir les détails"
                           >
                             <EyeIcon className="h-5 w-5" />
                           </Link>
@@ -438,7 +471,7 @@ const MesAnnoncesPage = () => {
                             : 'text-gray-500 hover:bg-gray-50'
                         }`}
                       >
-                        <span className="sr-only">Pr�c�dent</span>
+                        <span className="sr-only">Précédent</span>
                         <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
                       </button>
                       
@@ -523,7 +556,7 @@ const MesAnnoncesPage = () => {
                     </h3>
                     <div className="mt-2">
                       <p className="text-sm text-gray-500">
-                        Etes-vous s�r de vouloir supprimer cette annonce ? Cette action est irr�versible.
+                        Etes-vous sûr de vouloir supprimer cette annonce ? Cette action est irréversible.
                       </p>
                     </div>
                   </div>

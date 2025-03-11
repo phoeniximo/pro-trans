@@ -1,6 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors'); // Importe le module CORS
+const fileUpload = require('express-fileupload');
+const path = require('path');
 const annonceRoutes = require('./routes/annonceRoutes');
 
 const app = express();
@@ -13,6 +15,15 @@ app.use(cors({
 
 // Middleware pour parser le JSON
 app.use(express.json());
+
+// Middleware pour l'upload de fichiers
+app.use(fileUpload({
+  limits: { fileSize: 5 * 1024 * 1024 }, // Limite à 5MB
+  createParentPath: true
+}));
+
+// Servir les fichiers statiques
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/annonces', annonceRoutes);

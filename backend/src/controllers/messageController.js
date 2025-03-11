@@ -169,10 +169,28 @@ exports.getConversations = async (req, res) => {
     const conversations = {};
     
     messages.forEach(message => {
+      // Vérifier que les références sont correctement peuplées
+      if (!message.expediteur || !message.destinataire || !message.annonce) {
+        console.warn('Message incomplet ignoré:', message._id);
+        return;  // Ignorer ce message et passer au suivant
+      }
+      
       // Déterminer l'autre utilisateur dans la conversation
-      const autreUtilisateur = message.expediteur._id.toString() === req.user.id 
+      const expediteurId = message.expediteur._id ? message.expediteur._id.toString() : null;
+      if (expediteurId === null) {
+        console.warn('ID d\'expéditeur manquant dans le message:', message._id);
+        return;  // Ignorer ce message et passer au suivant
+      }
+      
+      const autreUtilisateur = expediteurId === req.user.id 
         ? message.destinataire
         : message.expediteur;
+      
+      // Vérifier que l'autre utilisateur est valide
+      if (!autreUtilisateur || !autreUtilisateur._id) {
+        console.warn('Autre utilisateur invalide dans le message:', message._id);
+        return;  // Ignorer ce message et passer au suivant
+      }
       
       const conversationId = `${message.annonce._id}_${autreUtilisateur._id}`;
       
@@ -320,6 +338,53 @@ exports.getUnreadCount = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Erreur lors du comptage des messages non lus',
+      error: err.message
+    });
+  }
+};
+
+// Fonction temporaire pour la suppression d'un message
+exports.deleteMessage = async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    
+    // Vérifier si l'ID est valide
+    if (!mongoose.Types.ObjectId.isValid(messageId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID de message invalide'
+      });
+    }
+    
+    // Vérifier si le message existe
+    const message = await Message.findById(messageId);
+    
+    if (!message) {
+      return res.status(404).json({
+        success: false,
+        message: 'Message non trouvé'
+      });
+    }
+    
+    // Vérifier si l'utilisateur est l'expéditeur du message
+    if (message.expediteur.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Vous n\'êtes pas autorisé à supprimer ce message'
+      });
+    }
+    
+    await Message.findByIdAndDelete(messageId);
+    
+    res.json({
+      success: true,
+      message: 'Message supprimé avec succès'
+    });
+  } catch (err) {
+    console.error('Erreur lors de la suppression du message:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la suppression du message',
       error: err.message
     });
   }
