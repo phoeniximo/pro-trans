@@ -35,7 +35,7 @@ const DevisDetailPage = () => {
   const [error, setError] = useState(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
 
-  // Charger les détails du devis
+  // Charger les dÃ©tails du devis
   useEffect(() => {
     const fetchDevisDetails = async () => {
       try {
@@ -44,9 +44,9 @@ const DevisDetailPage = () => {
         setDevis(response.data.data);
         setError(null);
       } catch (err) {
-        console.error('Erreur lors du chargement des détails du devis:', err);
-        setError('Erreur lors du chargement des détails du devis. Veuillez réessayer.');
-        toast.error('Erreur lors du chargement des détails du devis');
+        console.error('Erreur lors du chargement des dÃ©tails du devis:', err);
+        setError('Erreur lors du chargement des dÃ©tails du devis. Veuillez rÃ©essayer.');
+        toast.error('Erreur lors du chargement des dÃ©tails du devis');
       } finally {
         setLoading(false);
       }
@@ -55,13 +55,13 @@ const DevisDetailPage = () => {
     fetchDevisDetails();
   }, [id]);
 
-  // Gérer l'acceptation du devis (pour les clients)
+  // GÃ©rer l'acceptation du devis (pour les clients)
   const handleAcceptDevis = async () => {
     try {
       await apiClient.put(`/devis/${id}/accepter`);
-      toast.success('Devis accepté avec succès !');
+      toast.success('Devis acceptÃ© avec succÃ¨s !');
       
-      // Mettre à jour le devis
+      // Mettre Ã  jour le devis
       setDevis({ ...devis, statut: 'accepte' });
       
       // Afficher le formulaire de paiement
@@ -72,13 +72,13 @@ const DevisDetailPage = () => {
     }
   };
 
-  // Gérer le refus du devis (pour les clients)
+  // GÃ©rer le refus du devis (pour les clients)
   const handleRefuseDevis = async () => {
     try {
-      await apiClient.put(`/devis/${id}/refuser`, { raison: 'Refusé par le client' });
-      toast.success('Devis refusé avec succès');
+      await apiClient.put(`/devis/${id}/refuser`, { raison: 'RefusÃ© par le client' });
+      toast.success('Devis refusÃ© avec succÃ¨s');
       
-      // Mettre à jour le devis
+      // Mettre Ã  jour le devis
       setDevis({ ...devis, statut: 'refuse' });
     } catch (err) {
       console.error('Erreur lors du refus du devis:', err);
@@ -86,13 +86,13 @@ const DevisDetailPage = () => {
     }
   };
 
-  // Gérer l'annulation du devis (pour les transporteurs)
+  // GÃ©rer l'annulation du devis (pour les transporteurs)
   const handleCancelDevis = async () => {
     try {
-      await apiClient.put(`/devis/${id}/annuler`, { raison: 'Annulé par le transporteur' });
-      toast.success('Devis annulé avec succès');
+      await apiClient.put(`/devis/${id}/annuler`, { raison: 'AnnulÃ© par le transporteur' });
+      toast.success('Devis annulÃ© avec succÃ¨s');
       
-      // Mettre à jour le devis
+      // Mettre Ã  jour le devis
       setDevis({ ...devis, statut: 'annule' });
     } catch (err) {
       console.error('Erreur lors de l\'annulation du devis:', err);
@@ -100,33 +100,33 @@ const DevisDetailPage = () => {
     }
   };
 
-  // Gérer la mise à jour du statut de transport (pour les transporteurs)
+  // GÃ©rer la mise Ã  jour du statut de transport (pour les transporteurs)
   const handleUpdateStatus = async (statut, commentaire = '', localisation = '') => {
     try {
       await apiClient.put(`/devis/${id}/statut`, { statut, commentaire, localisation });
-      toast.success('Statut mis à jour avec succès');
+      toast.success('Statut mis Ã  jour avec succÃ¨s');
       
-      // Recharger le devis pour avoir les dernières informations
+      // Recharger le devis pour avoir les derniÃ¨res informations
       const response = await apiClient.get(`/devis/${id}`);
       setDevis(response.data.data);
     } catch (err) {
-      console.error('Erreur lors de la mise à jour du statut:', err);
-      toast.error('Erreur lors de la mise à jour du statut');
+      console.error('Erreur lors de la mise Ã  jour du statut:', err);
+      toast.error('Erreur lors de la mise Ã  jour du statut');
     }
   };
 
-  // Gérer le paiement complété
+  // GÃ©rer le paiement complÃ©tÃ©
   const handlePaymentComplete = (paymentData) => {
-    toast.success('Paiement effectué avec succès !');
+    toast.success('Paiement effectuÃ© avec succÃ¨s !');
     setShowPaymentForm(false);
     
-    // Recharger le devis pour avoir les dernières informations
+    // Recharger le devis pour avoir les derniÃ¨res informations
     const fetchUpdatedDevis = async () => {
       try {
         const response = await apiClient.get(`/devis/${id}`);
         setDevis(response.data.data);
       } catch (err) {
-        console.error('Erreur lors du chargement des détails du devis:', err);
+        console.error('Erreur lors du chargement des dÃ©tails du devis:', err);
       }
     };
     
@@ -155,7 +155,7 @@ const DevisDetailPage = () => {
           <div className="flex">
             <ExclamationCircleIcon className="h-6 w-6 text-red-500 mr-2" />
             <div>
-              <p className="text-red-700">{error || 'Devis non trouvé'}</p>
+              <p className="text-red-700">{error || 'Devis non trouvÃ©'}</p>
               <Button 
                 to="/dashboard/devis"
                 variant="outline" 
@@ -171,10 +171,12 @@ const DevisDetailPage = () => {
     );
   }
 
-  // Déterminer l'autre partie (client ou transporteur)
-  const otherParty = user.role === 'client' ? devis.transporteur : devis.client;
+  // DÃ©terminer l'autre partie (client ou transporteur) avec vÃ©rification de sÃ©curitÃ©
+  const otherParty = user.role === 'client' 
+    ? (devis.transporteur || {}) 
+    : (devis.client || {});
   
-  // Déterminer si l'utilisateur peut prendre des actions
+  // DÃ©terminer si l'utilisateur peut prendre des actions
   const canAccept = user.role === 'client' && devis.statut === 'en_attente';
   const canRefuse = user.role === 'client' && devis.statut === 'en_attente';
   const canCancel = user.role === 'transporteur' && devis.statut === 'en_attente';
@@ -198,7 +200,7 @@ const DevisDetailPage = () => {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Devis #{devis._id.substring(0, 8)}</h1>
             <p className="text-sm text-gray-500">
-              Créé le {formatDate(devis.createdAt)}
+              CrÃ©Ã© le {formatDate(devis.createdAt)}
             </p>
           </div>
           <div>
@@ -220,13 +222,13 @@ const DevisDetailPage = () => {
                     <CurrencyEuroIcon className="h-5 w-5 text-gray-400 mr-1.5" />
                     Montant
                   </dt>
-                  <dd className="mt-1 text-lg font-bold text-gray-900">{devis.montant.toFixed(2)} €</dd>
+                  <dd className="mt-1 text-lg font-bold text-gray-900">{devis.montant.toFixed(2)} â‚¬</dd>
                 </div>
                 
                 <div className="sm:col-span-1">
                   <dt className="text-sm font-medium text-gray-500 flex items-center">
                     <ClockIcon className="h-5 w-5 text-gray-400 mr-1.5" />
-                    Délai de livraison
+                    DÃ©lai de livraison
                   </dt>
                   <dd className="mt-1 text-sm text-gray-900">{formatDate(devis.delaiLivraison)}</dd>
                 </div>
@@ -247,9 +249,9 @@ const DevisDetailPage = () => {
                           <li key={index} className="p-3 flex items-start">
                             <div className="min-w-0 flex-1">
                               <p className="text-sm font-medium text-gray-900">
-                                {commentaire.auteur === devis.client._id 
-                                  ? `${devis.client.prenom} ${devis.client.nom} (Client)`
-                                  : `${devis.transporteur.prenom} ${devis.transporteur.nom} (Transporteur)`}
+                                {commentaire.auteur === (devis.client?._id || '') 
+                                  ? `${devis.client?.prenom || ''} ${devis.client?.nom || ''} (Client)`
+                                  : `${devis.transporteur?.prenom || ''} ${devis.transporteur?.nom || ''} (Transporteur)`}
                               </p>
                               <p className="text-sm text-gray-500">{formatDate(commentaire.date)}</p>
                               <p className="mt-1 text-sm text-gray-900">{commentaire.contenu}</p>
@@ -306,17 +308,17 @@ const DevisDetailPage = () => {
                           className="w-full sm:w-auto"
                         >
                           <TruckIcon className="h-5 w-5 mr-2" />
-                          Démarrer le transport
+                          DÃ©marrer le transport
                         </Button>
                         
                         {devis.statut === 'en_cours' && (
                           <Button
                             variant="primary"
-                            onClick={() => handleUpdateStatus('livre', 'Livraison effectuée', devis.annonce.villeArrivee)}
+                            onClick={() => handleUpdateStatus('livre', 'Livraison effectuÃ©e', devis.annonce.villeArrivee)}
                             className="w-full sm:w-auto"
                           >
                             <CheckIcon className="h-5 w-5 mr-2" />
-                            Marquer comme livré
+                            Marquer comme livrÃ©
                           </Button>
                         )}
                       </div>
@@ -357,7 +359,7 @@ const DevisDetailPage = () => {
                       <dt className="text-sm font-medium text-gray-500">Statut</dt>
                       <dd className="mt-1">
                         <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
-                          Payé
+                          PayÃ©
                         </span>
                       </dd>
                     </div>
@@ -369,11 +371,11 @@ const DevisDetailPage = () => {
                     
                     <div className="sm:col-span-1">
                       <dt className="text-sm font-medium text-gray-500">Montant</dt>
-                      <dd className="mt-1 text-sm text-gray-900">{devis.paiement.montant.toFixed(2)} €</dd>
+                      <dd className="mt-1 text-sm text-gray-900">{devis.paiement.montant.toFixed(2)} â‚¬</dd>
                     </div>
                     
                     <div className="sm:col-span-1">
-                      <dt className="text-sm font-medium text-gray-500">Méthode</dt>
+                      <dt className="text-sm font-medium text-gray-500">MÃ©thode</dt>
                       <dd className="mt-1 text-sm text-gray-900">
                         {devis.paiement.methode === 'carte' 
                           ? 'Carte bancaire' 
@@ -384,7 +386,7 @@ const DevisDetailPage = () => {
                     </div>
                     
                     <div className="sm:col-span-2">
-                      <dt className="text-sm font-medium text-gray-500">Référence</dt>
+                      <dt className="text-sm font-medium text-gray-500">RÃ©fÃ©rence</dt>
                       <dd className="mt-1 text-sm text-gray-900">{devis.paiement.reference}</dd>
                     </div>
                   </dl>
@@ -402,11 +404,11 @@ const DevisDetailPage = () => {
                 
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    {otherParty.photo ? (
+                    {otherParty && otherParty.photo ? (
                       <img
                         className="h-12 w-12 rounded-full object-cover"
                         src={otherParty.photo}
-                        alt={`${otherParty.prenom} ${otherParty.nom}`}
+                        alt={`${otherParty.prenom || ''} ${otherParty.nom || ''}`}
                       />
                     ) : (
                       <div className="h-12 w-12 rounded-full bg-teal-500 flex items-center justify-center">
@@ -415,14 +417,18 @@ const DevisDetailPage = () => {
                     )}
                   </div>
                   <div className="ml-4">
-                    <h3 className="text-lg font-medium text-gray-900">{otherParty.prenom} {otherParty.nom}</h3>
-                    <p className="text-sm text-gray-500">
-                      Membre depuis {format(new Date(otherParty.createdAt), 'MMMM yyyy', { locale: fr })}
-                    </p>
+                    <h3 className="text-lg font-medium text-gray-900">
+                      {otherParty?.prenom || ''} {otherParty?.nom || ''}
+                    </h3>
+                    {otherParty?.createdAt && (
+                      <p className="text-sm text-gray-500">
+                        Membre depuis {format(new Date(otherParty.createdAt), 'MMMM yyyy', { locale: fr })}
+                      </p>
+                    )}
                   </div>
                 </div>
                 
-                {otherParty.note && (
+                {otherParty?.note && (
                   <div className="mt-4 flex items-center">
                     <div className="flex text-yellow-400">
                       {[...Array(5)].map((_, i) => (
@@ -442,42 +448,44 @@ const DevisDetailPage = () => {
                   </div>
                 )}
                 
-                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <Button
-                    to={`/dashboard/messages/${devis.annonce._id}_${otherParty._id}`}
-                    variant="outline"
-                    size="sm"
-                  >
-                    <ChatBubbleLeftRightIcon className="h-5 w-5 mr-2" />
-                    Contacter
-                  </Button>
-                  <Button
-                    to={user.role === 'client' 
-                      ? `/transporteurs/${otherParty._id}` 
-                      : `/clients/${otherParty._id}`}
-                    variant="outline"
-                    size="sm"
-                  >
-                    <UserIcon className="h-5 w-5 mr-2" />
-                    Voir le profil
-                  </Button>
-                </div>
+                {otherParty && otherParty._id && (
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <Button
+                      to={`/dashboard/messages/${devis.annonce._id}_${otherParty._id}`}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <ChatBubbleLeftRightIcon className="h-5 w-5 mr-2" />
+                      Contacter
+                    </Button>
+                    <Button
+                      to={user.role === 'client' 
+                        ? `/transporteurs/${otherParty._id}` 
+                        : `/clients/${otherParty._id}`}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <UserIcon className="h-5 w-5 mr-2" />
+                      Voir le profil
+                    </Button>
+                  </div>
+                )}
               </div>
               
-              {/* Détails de l'annonce */}
+              {/* DÃ©tails de l'annonce */}
               <div className="bg-gray-50 rounded-lg p-4">
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Détails de l'annonce</h2>
+                <h2 className="text-lg font-medium text-gray-900 mb-4">DÃ©tails de l'annonce</h2>
                 
                 <div className="space-y-4">
                   <div>
                     <h3 className="text-base font-medium text-gray-900">{devis.annonce.titre}</h3>
                     <div className="mt-2 flex items-center text-sm text-gray-500">
                       <MapPinIcon className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-                      <p>{devis.annonce.villeDepart} ? {devis.annonce.villeArrivee}</p>
+                      <p>{devis.annonce.villeDepart} â†’ {devis.annonce.villeArrivee}</p>
                     </div>
                     <div className="mt-2 flex items-center text-sm text-gray-500">
                       <CalendarIcon className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
-                      <p>Départ prévu le {formatDate(devis.annonce.dateDepart)}</p>
+                      <p>DÃ©part prÃ©vu le {formatDate(devis.annonce.dateDepart)}</p>
                     </div>
                     <div className="mt-2 flex items-center text-sm text-gray-500">
                       <TruckIcon className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
@@ -486,8 +494,8 @@ const DevisDetailPage = () => {
                          devis.annonce.typeTransport === 'meuble' ? 'Meuble' :
                          devis.annonce.typeTransport === 'marchandise' ? 'Marchandise' :
                          devis.annonce.typeTransport === 'palette' ? 'Palette' :
-                         devis.annonce.typeTransport === 'demenagement' ? 'Déménagement' :
-                         devis.annonce.typeTransport === 'vehicule' ? 'Véhicule' : 'Autre'}
+                         devis.annonce.typeTransport === 'demenagement' ? 'DÃ©mÃ©nagement' :
+                         devis.annonce.typeTransport === 'vehicule' ? 'VÃ©hicule' : 'Autre'}
                       </p>
                     </div>
                   </div>
@@ -508,7 +516,7 @@ const DevisDetailPage = () => {
                       size="sm"
                     >
                       <DocumentTextIcon className="h-5 w-5 mr-2" />
-                      Voir l'annonce complète
+                      Voir l'annonce complÃ¨te
                     </Button>
                   </div>
                 </div>
@@ -531,10 +539,10 @@ const DevisDetailPage = () => {
         </div>
       )}
       
-      {/* Informations supplémentaires */}
+      {/* Informations supplÃ©mentaires */}
       <div className="bg-white shadow rounded-lg overflow-hidden mb-6">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">Informations supplémentaires</h2>
+          <h2 className="text-lg font-medium text-gray-900">Informations supplÃ©mentaires</h2>
         </div>
         
         <div className="px-6 py-4">
@@ -544,7 +552,7 @@ const DevisDetailPage = () => {
               <div>
                 <h3 className="text-sm font-medium text-blue-800">Protection acheteur</h3>
                 <p className="mt-1 text-sm text-blue-700">
-                  Tous les transports effectués via Pro-Trans sont assurés. Votre paiement est sécurisé et n'est versé au transporteur qu'une fois la livraison confirmée.
+                  Tous les transports effectuÃ©s via Pro-Trans sont assurÃ©s. Votre paiement est sÃ©curisÃ© et n'est versÃ© au transporteur qu'une fois la livraison confirmÃ©e.
                 </p>
               </div>
             </div>
@@ -553,19 +561,19 @@ const DevisDetailPage = () => {
               <h3 className="text-sm font-medium text-gray-800">Conditions du service</h3>
               <ul className="mt-2 text-sm text-gray-600 space-y-1.5">
                 <li className="flex items-start">
-                  <span className="flex-shrink-0 h-5 w-5 text-green-500">?</span>
-                  <span className="ml-2">Transporteur vérifié par nos équipes</span>
+                  <span className="flex-shrink-0 h-5 w-5 text-green-500">âœ“</span>
+                  <span className="ml-2">Transporteur vÃ©rifiÃ© par nos Ã©quipes</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="flex-shrink-0 h-5 w-5 text-green-500">?</span>
-                  <span className="ml-2">Suivi en temps réel de votre transport</span>
+                  <span className="flex-shrink-0 h-5 w-5 text-green-500">âœ“</span>
+                  <span className="ml-2">Suivi en temps rÃ©el de votre transport</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="flex-shrink-0 h-5 w-5 text-green-500">?</span>
-                  <span className="ml-2">Assurance de base incluse (jusqu'à 1000€)</span>
+                  <span className="flex-shrink-0 h-5 w-5 text-green-500">âœ“</span>
+                  <span className="ml-2">Assurance de base incluse (jusqu'Ã  1000â‚¬)</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="flex-shrink-0 h-5 w-5 text-green-500">?</span>
+                  <span className="flex-shrink-0 h-5 w-5 text-green-500">âœ“</span>
                   <span className="ml-2">Support client disponible 7j/7</span>
                 </li>
               </ul>
@@ -574,7 +582,7 @@ const DevisDetailPage = () => {
           
           <div className="mt-6 text-sm text-gray-500">
             <p>
-              Pour toute question ou besoin d'assistance, n'hésitez pas à contacter notre service client au 01 23 45 67 89 ou à support@pro-trans.fr.
+              Pour toute question ou besoin d'assistance, n'hÃ©sitez pas Ã  contacter notre service client au 01 23 45 67 89 ou Ã  support@pro-trans.fr.
             </p>
           </div>
         </div>

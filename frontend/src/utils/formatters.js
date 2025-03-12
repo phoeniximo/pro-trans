@@ -22,11 +22,14 @@ export const formatDate = (date, formatStr = 'dd/MM/yyyy') => {
         // Pour d'autres formats de chaîne
         dateObj = new Date(date);
       }
-    } else {
+    } else if (date instanceof Date) {
       dateObj = date;
+    } else {
+      console.error('Type de date non pris en charge:', typeof date, date);
+      return 'Date non spécifiée';
     }
     
-    // Vérifier que la date est valide - méthode plus robuste
+    // Vérification plus stricte de la validité de la date
     if (!isValid(dateObj) || isNaN(dateObj.getTime())) {
       console.error('Date invalide:', date);
       return 'Date non spécifiée';
@@ -34,7 +37,7 @@ export const formatDate = (date, formatStr = 'dd/MM/yyyy') => {
     
     return format(dateObj, formatStr, { locale: fr });
   } catch (error) {
-    console.error('Erreur de formatage de date:', error, date);
+    console.error('Erreur de formatage de date:', error, 'Date reçue:', date, 'Type:', typeof date);
     return 'Date non disponible';
   }
 };
@@ -49,20 +52,35 @@ export const formatRelativeDate = (date, options = {}) => {
   if (!date) return '';
   
   try {
-    const dateObj = typeof date === 'string' ? parseISO(date) : date;
+    // Vérifier si la date est valide avant tout traitement
+    let dateObj;
+    if (typeof date === 'string') {
+      dateObj = parseISO(date);
+    } else if (date instanceof Date) {
+      dateObj = date;
+    } else {
+      console.error('Type de date non pris en charge:', typeof date);
+      return '';
+    }
+    
+    if (!isValid(dateObj) || isNaN(dateObj.getTime())) {
+      console.error('Date invalide pour le formatage relatif:', date);
+      return '';
+    }
+    
     return formatDistanceToNow(dateObj, {
       addSuffix: true,
       locale: fr,
       ...options
     });
   } catch (error) {
-    console.error('Erreur de formatage de date relative:', error);
+    console.error('Erreur de formatage de date relative:', error, date);
     return '';
   }
 };
 
 /**
- * Formate un montant en euros
+ * Formate un montant en euros avec gestion améliorée des erreurs
  * @param {number} amount - Montant à formater
  * @param {Object} options - Options de formatage
  * @returns {string} - Montant formaté
@@ -70,15 +88,28 @@ export const formatRelativeDate = (date, options = {}) => {
 export const formatCurrency = (amount, options = {}) => {
   if (amount === undefined || amount === null) return '';
   
-  const formatter = new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-    ...options
-  });
-  
-  return formatter.format(amount);
+  try {
+    // Vérifier que le montant est bien un nombre
+    const numericAmount = Number(amount);
+    
+    if (isNaN(numericAmount)) {
+      console.error('Montant invalide pour le formatage de devise:', amount);
+      return '';
+    }
+    
+    const formatter = new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+      ...options
+    });
+    
+    return formatter.format(numericAmount);
+  } catch (error) {
+    console.error('Erreur lors du formatage de la devise:', error, amount);
+    return '';
+  }
 };
 
 /**
@@ -122,19 +153,31 @@ export const formatPhoneNumber = (phone) => {
 export const formatDistanceKm = (distance) => {
   if (distance === undefined || distance === null) return '';
   
-  if (distance < 1) {
-    // Convertir en mètres
-    const meters = Math.round(distance * 1000);
-    return `${meters} m`;
+  try {
+    const numericDistance = Number(distance);
+    
+    if (isNaN(numericDistance)) {
+      console.error('Distance invalide:', distance);
+      return '';
+    }
+    
+    if (numericDistance < 1) {
+      // Convertir en mètres
+      const meters = Math.round(numericDistance * 1000);
+      return `${meters} m`;
+    }
+    
+    if (numericDistance >= 1000) {
+      // Formater avec une décimale pour les grandes distances
+      return `${(numericDistance / 1000).toFixed(1)} km`;
+    }
+    
+    // Formater avec une décimale pour les kilomètres
+    return `${numericDistance.toFixed(1)} km`;
+  } catch (error) {
+    console.error('Erreur de formatage de distance:', error);
+    return '';
   }
-  
-  if (distance >= 1000) {
-    // Formater avec une décimale pour les grandes distances
-    return `${(distance / 1000).toFixed(1)} km`;
-  }
-  
-  // Formater avec une décimale pour les kilomètres
-  return `${distance.toFixed(1)} km`;
 };
 
 /**

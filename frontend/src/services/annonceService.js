@@ -1,12 +1,46 @@
 import apiClient from '../api/client';
 
+// Fonction utilitaire pour construire les URLs correctes des images
+const fixImagePath = (photoPath) => {
+  if (!photoPath) return '/images/default.jpg';
+  
+  // Si c'est déjà une URL complète, la retourner telle quelle
+  if (photoPath.startsWith('http')) return photoPath;
+  
+  // Si c'est un chemin relatif qui commence par /uploads
+  if (photoPath.startsWith('/uploads/')) {
+    // Utiliser HTTP au lieu de HTTPS pour éviter les erreurs SSL
+    return `http://localhost:5000${photoPath}`;
+  }
+  
+  // Pour tout autre chemin, retourner tel quel
+  return photoPath;
+};
+
 // Service pour la gestion des annonces
 const annonceService = {
+  // Fonction utilitaire exportée pour être utilisée ailleurs
+  fixImagePath,
+
   // Récupérer toutes les annonces avec filtres optionnels
   getAnnonces: async (filters = {}) => {
     try {
       console.log("Appel API getAnnonces avec filtres:", filters);
       const response = await apiClient.get('/annonces', { params: filters });
+      
+      // Corriger les chemins d'images si nécessaire
+      if (response.data && response.data.data) {
+        response.data.data = response.data.data.map(annonce => {
+          if (annonce.photos) {
+            annonce.photos = annonce.photos.map(photo => fixImagePath(photo));
+          }
+          if (annonce.utilisateur && annonce.utilisateur.photo) {
+            annonce.utilisateur.photo = fixImagePath(annonce.utilisateur.photo);
+          }
+          return annonce;
+        });
+      }
+      
       return response.data;
     } catch (error) {
       console.error("Erreur dans getAnnonces:", error);
@@ -19,6 +53,29 @@ const annonceService = {
     try {
       console.log(`Récupération de l'annonce ${id}`);
       const response = await apiClient.get(`/annonces/${id}`);
+      
+      // Corriger les chemins d'images si l'annonce a des photos
+      if (response.data && response.data.data) {
+        if (response.data.data.photos) {
+          response.data.data.photos = response.data.data.photos.map(photo => fixImagePath(photo));
+        }
+        
+        // Si l'annonce a un utilisateur avec une photo, corriger aussi ce chemin
+        if (response.data.data.utilisateur && response.data.data.utilisateur.photo) {
+          response.data.data.utilisateur.photo = fixImagePath(response.data.data.utilisateur.photo);
+        }
+        
+        // Correction des photos dans les devis si présents
+        if (response.data.data.devis && Array.isArray(response.data.data.devis)) {
+          response.data.data.devis = response.data.data.devis.map(devis => {
+            if (devis.transporteur && devis.transporteur.photo) {
+              devis.transporteur.photo = fixImagePath(devis.transporteur.photo);
+            }
+            return devis;
+          });
+        }
+      }
+      
       return response.data;
     } catch (error) {
       console.error(`Erreur lors de la récupération de l'annonce ${id}:`, error);
@@ -106,6 +163,17 @@ const annonceService = {
       console.log('Récupération de mes annonces avec filtres:', filters);
       const response = await apiClient.get('/annonces/user/mes-annonces', { params: filters });
       console.log('Réponse de getMesAnnonces:', response);
+      
+      // Corriger les chemins d'images si nécessaire
+      if (response.data && response.data.data) {
+        response.data.data = response.data.data.map(annonce => {
+          if (annonce.photos) {
+            annonce.photos = annonce.photos.map(photo => fixImagePath(photo));
+          }
+          return annonce;
+        });
+      }
+      
       return response.data;
     } catch (error) {
       console.error('Erreur détaillée lors de getMesAnnonces:', error);

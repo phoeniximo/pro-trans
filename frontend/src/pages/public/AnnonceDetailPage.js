@@ -1,172 +1,175 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
+import { EyeIcon, PencilIcon, ArrowLeftIcon, PhoneIcon, EnvelopeIcon, MapPinIcon } from '@heroicons/react/24/outline';
 import { toast } from 'react-hot-toast';
-import { 
-  MapPinIcon, 
-  CalendarIcon, 
-  TruckIcon,
-  UserIcon,
-  ScaleIcon,
-  CubeIcon,
-  CurrencyEuroIcon,
-  ClockIcon,
-  ChatBubbleLeftRightIcon,
-  ArrowLeftIcon,
-  ExclamationCircleIcon,
-  ShieldCheckIcon
-} from '@heroicons/react/24/outline';
-import { StarIcon } from '@heroicons/react/24/solid';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
+import annonceService from '../../services/annonceService';
+import { formatDate, formatCurrency } from '../../utils/formatters';
+import { STATUT_ANNONCE_LABELS, STATUT_ANNONCE_COLORS } from '../../utils/constants';
 import Button from '../../components/ui/Button';
+import Badge from '../../components/ui/Badge';
 import { useAuth } from '../../hooks/useAuth';
-import apiClient from '../../api/client';
-import { TYPE_TRANSPORT_LABELS, STATUT_ANNONCE_COLORS } from '../../utils/constants';
+
+// Fonction utilitaire pour la vÃ©rification des dates avant formatage - CORRIGÃ‰E
+const safeFormatDate = (dateValue, formatString = 'dd MMMM yyyy') => {
+  if (!dateValue) {
+    return 'Date non spÃ©cifiÃ©e';
+  }
+  
+  try {
+    // Conversion en objet Date
+    let dateObj;
+    if (typeof dateValue === 'string') {
+      dateObj = new Date(dateValue);
+    } else {
+      dateObj = dateValue;
+    }
+    
+    // VÃ©rification approfondie de la validitÃ©
+    if (isNaN(dateObj.getTime())) {
+      console.warn(`Date invalide dÃ©tectÃ©e: "${dateValue}"`);
+      return 'Date non disponible';
+    }
+    
+    // Utiliser la fonction format de date-fns directement
+    return format(dateObj, formatString, { locale: fr });
+  } catch (error) {
+    console.error('Erreur lors du formatage de la date:', error, dateValue);
+    return 'Date invalide';
+  }
+};
 
 const AnnonceDetailPage = () => {
   const { id } = useParams();
   const { isAuthenticated, user } = useAuth();
-  const navigate = useNavigate();
   const [annonce, setAnnonce] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  // Etat pour le formulaire de message
-  const [message, setMessage] = useState('');
-  const [isSendingMessage, setIsSendingMessage] = useState(false);
-  
-  // Etats pour le formulaire de devis (transporteurs uniquement)
-  const [showDevisForm, setShowDevisForm] = useState(false);
-  const [devisData, setDevisData] = useState({
-    montant: '',
-    message: '',
-    delaiLivraison: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // par défaut : dans 7 jours
-  });
-  const [isSendingDevis, setIsSendingDevis] = useState(false);
+  const [showContactInfo, setShowContactInfo] = useState(false);
+  const apiBaseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-  // Chargement des données de l'annonce
+  // RÃ©cupÃ©rer les dÃ©tails de l'annonce
   useEffect(() => {
-    const fetchAnnonce = async () => {
+    const fetchAnnonceDetails = async () => {
       try {
         setLoading(true);
-        const response = await apiClient.get(`/annonces/${id}`);
-        setAnnonce(response.data.data);
-        setError(null);
+        const response = await annonceService.getAnnonceById(id);
+        
+        // Debug logs pour le dÃ©veloppement
+        console.log("RÃ©ponse de l'annonce:", response);
+        
+        if (response.success) {
+          // Nettoyage des dates potentiellement problÃ©matiques
+          if (response.data) {
+            // Si la date n'est pas valide, la dÃ©finir comme null
+            if (response.data.dateDepart && isNaN(new Date(response.data.dateDepart).getTime())) {
+              console.warn("Date de dÃ©part invalide dÃ©tectÃ©e, nettoyage effectuÃ©");
+              response.data.dateDepart = null;
+            }
+            if (response.data.dateArrivee && isNaN(new Date(response.data.dateArrivee).getTime())) {
+              console.warn("Date d'arrivÃ©e invalide dÃ©tectÃ©e, nettoyage effectuÃ©");
+              response.data.dateArrivee = null;
+            }
+            if (response.data.createdAt && isNaN(new Date(response.data.createdAt).getTime())) {
+              console.warn("Date de crÃ©ation invalide dÃ©tectÃ©e, nettoyage effectuÃ©");
+              response.data.createdAt = null;
+            }
+          }
+          
+          setAnnonce(response.data);
+          setError(null);
+        } else {
+          setError('Erreur lors de la rÃ©cupÃ©ration de l\'annonce');
+          toast.error('Erreur lors de la rÃ©cupÃ©ration de l\'annonce');
+        }
       } catch (err) {
-        console.error('Erreur lors du chargement de l\'annonce:', err);
-        setError('Erreur lors du chargement de l\'annonce. Veuillez réessayer.');
-        toast.error('Erreur lors du chargement de l\'annonce');
+        console.error('Erreur lors de la rÃ©cupÃ©ration des dÃ©tails de l\'annonce:', err);
+        setError('Impossible de charger les dÃ©tails de l\'annonce');
+        toast.error('Erreur lors de la rÃ©cupÃ©ration des dÃ©tails de l\'annonce');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAnnonce();
+    fetchAnnonceDetails();
   }, [id]);
 
-  // Gérer l'envoi d'un message
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    
-    if (!isAuthenticated) {
-      toast.error('Vous devez être connecté pour envoyer un message');
-      navigate('/login', { state: { from: `/annonces/${id}` } });
-      return;
-    }
-    
-    if (!message.trim()) {
-      toast.error('Veuillez entrer un message');
-      return;
-    }
-    
-    try {
-      setIsSendingMessage(true);
-      
-      await apiClient.post('/messages', {
-        contenu: message,
-        destinataire: annonce.utilisateur._id,
-        annonce: annonce._id
-      });
-      
-      toast.success('Message envoyé avec succès');
-      setMessage('');
-      
-      // Rediriger vers la page de conversation
-      navigate(`/dashboard/messages/${annonce._id}_${annonce.utilisateur._id}`);
-    } catch (err) {
-      console.error('Erreur lors de l\'envoi du message:', err);
-      toast.error('Erreur lors de l\'envoi du message');
-    } finally {
-      setIsSendingMessage(false);
-    }
-  };
-
-  // Gérer l'envoi d'un devis (pour les transporteurs)
-  const handleSendDevis = async (e) => {
-    e.preventDefault();
-    
-    if (!isAuthenticated || user.role !== 'transporteur') {
-      toast.error('Vous devez être connecté en tant que transporteur pour envoyer un devis');
-      return;
-    }
-    
-    if (!devisData.montant || !devisData.message || !devisData.delaiLivraison) {
-      toast.error('Veuillez remplir tous les champs du devis');
-      return;
-    }
-    
-    try {
-      setIsSendingDevis(true);
-      
-      await apiClient.post('/devis', {
-        annonce: annonce._id,
-        montant: parseFloat(devisData.montant),
-        message: devisData.message,
-        delaiLivraison: devisData.delaiLivraison
-      });
-      
-      toast.success('Devis envoyé avec succès');
-      setShowDevisForm(false);
-      setDevisData({
-        montant: '',
-        message: '',
-        delaiLivraison: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-      });
-      
-      // Rediriger vers la page des devis
-      navigate('/dashboard/devis');
-    } catch (err) {
-      console.error('Erreur lors de l\'envoi du devis:', err);
-      toast.error(err.response?.data?.message || 'Erreur lors de l\'envoi du devis');
-    } finally {
-      setIsSendingDevis(false);
-    }
-  };
-
+  // Afficher un Ã©tat de chargement
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-center h-64">
+      <div className="container mx-auto py-12">
+        <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-500"></div>
         </div>
       </div>
     );
   }
 
-  if (error || !annonce) {
+  // Afficher un message d'erreur
+  if (error) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-red-50 border-l-4 border-red-500 p-4">
-          <div className="flex">
-            <ExclamationCircleIcon className="h-6 w-6 text-red-500 mr-2" />
-            <div>
-              <p className="text-red-700">{error || 'Annonce non trouvée'}</p>
-              <Button 
+      <div className="container mx-auto py-12 px-4">
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="text-center">
+            <svg
+              className="mx-auto h-12 w-12 text-red-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+            <h3 className="mt-2 text-lg font-medium text-gray-900">Erreur</h3>
+            <p className="mt-1 text-sm text-gray-500">{error}</p>
+            <div className="mt-6">
+              <Button
                 to="/annonces"
-                variant="outline" 
-                size="sm" 
-                className="mt-2"
+                variant="outline"
+              >
+                <ArrowLeftIcon className="h-5 w-5 mr-1" />
+                Retour aux annonces
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Si aucune annonce n'est trouvÃ©e
+  if (!annonce) {
+    return (
+      <div className="container mx-auto py-12 px-4">
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="text-center">
+            <svg
+              className="mx-auto h-12 w-12 text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+            <h3 className="mt-2 text-lg font-medium text-gray-900">Annonce non trouvÃ©e</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              L'annonce que vous recherchez n'existe pas ou a Ã©tÃ© supprimÃ©e.
+            </p>
+            <div className="mt-6">
+              <Button
+                to="/annonces"
+                variant="outline"
               >
                 Retour aux annonces
               </Button>
@@ -177,451 +180,296 @@ const AnnonceDetailPage = () => {
     );
   }
 
-  // Formater la date
-  const formatDate = (date) => {
-    return format(new Date(date), 'dd MMMM yyyy', { locale: fr });
+  const renderStatus = (statut) => {
+    const statusClass = STATUT_ANNONCE_COLORS[statut] || 'bg-gray-100 text-gray-800';
+    return (
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}`}>
+        {STATUT_ANNONCE_LABELS[statut] || statut}
+      </span>
+    );
   };
 
-  // Déterminer si l'utilisateur connecté est le propriétaire de l'annonce
-  const isOwner = isAuthenticated && user.id === annonce.utilisateur._id;
-  
-  // Déterminer si l'utilisateur peut envoyer un devis (transporteur et pas propriétaire)
-  const canSendDevis = isAuthenticated && user.role === 'transporteur' && !isOwner && annonce.statut === 'disponible';
-
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Bouton de retour et statut */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-        <Button
-          to="/annonces"
-          variant="outline"
-          className="mb-4 sm:mb-0"
-        >
-          <ArrowLeftIcon className="h-5 w-5 mr-2" />
-          Retour aux annonces
-        </Button>
-        
-        <div className="flex items-center">
-          <span className={`px-3 py-1 text-sm font-medium rounded-full ${STATUT_ANNONCE_COLORS[annonce.statut]}`}>
-            {annonce.statut === 'disponible' ? 'Disponible' : 
-             annonce.statut === 'en_attente' ? 'En attente' : 
-             annonce.statut === 'en_cours' ? 'En cours' : 
-             annonce.statut === 'termine' ? 'Terminé' : 'Annulé'}
-          </span>
-          
-          {annonce.isUrgent && (
-            <span className="ml-2 px-3 py-1 text-sm font-medium bg-red-100 text-red-800 rounded-full">
-              Urgent
-            </span>
-          )}
-        </div>
-      </div>
-      
-      {/* Bandeau d'information pour le propriétaire */}
-      {isOwner && (
-        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <InformationCircleIcon className="h-5 w-5 text-blue-400" aria-hidden="true" />
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-blue-700">
-                Vous êtes le propriétaire de cette annonce. 
-                <Link 
-                  to={`/dashboard/annonces/${annonce._id}`} 
-                  className="font-medium text-blue-700 underline ml-1"
-                >
-                  Gérer cette annonce
+    <div className="bg-gray-50 py-12">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Fil d'Ariane */}
+        <div className="mb-6">
+          <nav className="flex" aria-label="Breadcrumb">
+            <ol className="flex items-center space-x-2">
+              <li>
+                <Link to="/" className="text-gray-500 hover:text-gray-700">
+                  Accueil
                 </Link>
-              </p>
+              </li>
+              <li className="flex items-center">
+                <svg className="h-5 w-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                </svg>
+                <Link to="/annonces" className="ml-2 text-gray-500 hover:text-gray-700">
+                  Annonces
+                </Link>
+              </li>
+              <li className="flex items-center">
+                <svg className="h-5 w-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                </svg>
+                <span className="ml-2 text-gray-700 font-medium truncate max-w-xs">
+                  {annonce.titre}
+                </span>
+              </li>
+            </ol>
+          </nav>
+        </div>
+
+        {/* En-tÃªte de l'annonce */}
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden mb-8">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="flex items-center">
+                  <h1 className="text-2xl font-bold text-gray-900 mr-3">{annonce.titre}</h1>
+                  {renderStatus(annonce.statut)}
+                </div>
+                <p className="mt-1 text-sm text-gray-500">
+                  PubliÃ©e le {annonce.createdAt ? safeFormatDate(annonce.createdAt) : 'Date inconnue'}
+                </p>
+              </div>
+              <div className="mt-4 md:mt-0">
+                {annonce.budget ? (
+                  <span className="text-2xl font-bold text-teal-600">{formatCurrency(annonce.budget)} DH</span>
+                ) : (
+                  <span className="text-md text-gray-500 italic">Budget non prÃ©cisÃ©</span>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Détails de l'annonce */}
-        <div className="lg:col-span-2">
-          <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-            {/* Titre et informations principales */}
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">{annonce.titre}</h1>
-              <div className="flex flex-col sm:flex-row sm:items-center text-sm text-gray-500 mt-2">
-                <div className="flex items-center mr-6 mb-2 sm:mb-0">
-                  <TruckIcon className="h-5 w-5 text-gray-400 mr-1" />
-                  <span>{TYPE_TRANSPORT_LABELS[annonce.typeTransport] || annonce.typeTransport}</span>
-                </div>
-                <div className="flex items-center mr-6 mb-2 sm:mb-0">
-                  <CalendarIcon className="h-5 w-5 text-gray-400 mr-1" />
-                  <span>{formatDate(annonce.dateDepart)}</span>
-                </div>
-                <div className="flex items-center">
-                  <MapPinIcon className="h-5 w-5 text-gray-400 mr-1" />
-                  <span>{annonce.villeDepart} ? {annonce.villeArrivee}</span>
-                </div>
-              </div>
-            </div>
-            
-            {/* Description */}
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-medium text-gray-900 mb-3">Description</h2>
-              <p className="text-gray-700 whitespace-pre-line">{annonce.description}</p>
-            </div>
-            
-            {/* Photos */}
-            {annonce.images && annonce.images.length > 0 && (
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-lg font-medium text-gray-900 mb-3">Photos</h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {annonce.images.map((image, index) => (
-                    <div 
-                      key={index} 
-                      className="relative h-40 bg-gray-100 rounded-lg overflow-hidden shadow-sm"
-                    >
+
+          {/* Photos */}
+          {annonce.photos && annonce.photos.length > 0 && (
+            <div className="p-6 border-b border-gray-200">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {annonce.photos.map((photo, index) => {
+                  let photoUrl = '';
+                  if (typeof photo === 'string') {
+                    if (photo.startsWith('http')) {
+                      photoUrl = photo;
+                    } else if (photo.startsWith('/uploads/')) {
+                      photoUrl = `${apiBaseUrl}${photo}`;
+                    } else {
+                      photoUrl = photo;
+                    }
+                  }
+                  
+                  return photoUrl ? (
+                    <div key={index} className="aspect-w-16 aspect-h-9 rounded-lg bg-gray-100 overflow-hidden">
                       <img 
-                        src={image} 
-                        alt={`Photo ${index + 1}`} 
-                        className="absolute inset-0 h-full w-full object-cover"
+                        src={photoUrl} 
+                        alt={`Photo ${index + 1} de l'annonce`} 
+                        className="object-cover w-full h-full"
+                        onError={(e) => {
+                          console.error(`Erreur de chargement de l'image: ${photoUrl}`);
+                          e.target.src = "/images/default.jpg";
+                        }}
                       />
                     </div>
-                  ))}
-                </div>
+                  ) : null;
+                })}
               </div>
-            )}
-            
-            {/* Détails du transport */}
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-medium text-gray-900 mb-3">Détails du transport</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Adresse de départ</h3>
-                  <p className="mt-1 text-gray-900 whitespace-pre-line">{annonce.adresseDepart}</p>
+            </div>
+          )}
+
+          {/* Informations principales */}
+          <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Colonne de gauche: dÃ©tails principaux */}
+            <div className="lg:col-span-2">
+              <div className="prose max-w-none">
+                <h2 className="text-lg font-medium text-gray-900 mb-3">Description</h2>
+                <div className="text-gray-700 whitespace-pre-line">{annonce.description}</div>
+                
+                {/* CaractÃ©ristiques */}
+                <h2 className="text-lg font-medium text-gray-900 mt-6 mb-3">CaractÃ©ristiques</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Type de transport</h3>
+                    <p className="mt-1 text-sm text-gray-900 capitalize">{annonce.typeTransport}</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Date de transport</h3>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {annonce.dateDepart ? safeFormatDate(annonce.dateDepart) : 'Date non spÃ©cifiÃ©e'}
+                    </p>
+                  </div>
+                  
+                  {annonce.poids && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500">Poids</h3>
+                      <p className="mt-1 text-sm text-gray-900">{annonce.poids} {annonce.unite_poids || 'kg'}</p>
+                    </div>
+                  )}
+                  
+                  {annonce.volume && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500">Volume</h3>
+                      <p className="mt-1 text-sm text-gray-900">{annonce.volume} mÂ³</p>
+                    </div>
+                  )}
+                  
+                  {annonce.dimensions && (annonce.dimensions.longueur || annonce.dimensions.largeur || annonce.dimensions.hauteur) && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500">Dimensions</h3>
+                      <p className="mt-1 text-sm text-gray-900">
+                        {annonce.dimensions.longueur || '-'} Ã— {annonce.dimensions.largeur || '-'} Ã— {annonce.dimensions.hauteur || '-'} {annonce.dimensions.unite || 'cm'}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {annonce.nombreColis > 0 && (
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500">Nombre de colis</h3>
+                      <p className="mt-1 text-sm text-gray-900">{annonce.nombreColis}</p>
+                    </div>
+                  )}
+                  
+                  {annonce.isUrgent && (
+                    <div className="sm:col-span-2">
+                      <Badge color="red">Transport urgent</Badge>
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500">Adresse d'arrivée</h3>
-                  <p className="mt-1 text-gray-900 whitespace-pre-line">{annonce.adresseArrivee}</p>
+                
+                {/* DÃ©tails du transport */}
+                <h2 className="text-lg font-medium text-gray-900 mb-3">DÃ©tails du transport</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Adresse de dÃ©part</h3>
+                    <p className="mt-1 text-gray-900 whitespace-pre-line">{annonce.villeDepart}</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Adresse d'arrivÃ©e</h3>
+                    <p className="mt-1 text-gray-900 whitespace-pre-line">{annonce.villeArrivee}</p>
+                  </div>
                 </div>
+                
+                {/* Options demandÃ©es */}
+                {annonce.optionsTransport && Object.values(annonce.optionsTransport).some(v => v) && (
+                  <>
+                    <h2 className="text-lg font-medium text-gray-900 mt-6 mb-3">Options demandÃ©es</h2>
+                    <div className="flex flex-wrap gap-2">
+                      {annonce.optionsTransport.chargement && (
+                        <Badge color="blue">Aide au chargement</Badge>
+                      )}
+                      {annonce.optionsTransport.dechargement && (
+                        <Badge color="blue">Aide au dÃ©chargement</Badge>
+                      )}
+                      {annonce.optionsTransport.montage && (
+                        <Badge color="blue">Montage des meubles</Badge>
+                      )}
+                      {annonce.optionsTransport.demontage && (
+                        <Badge color="blue">DÃ©montage des meubles</Badge>
+                      )}
+                      {annonce.optionsTransport.emballage && (
+                        <Badge color="blue">Emballage des objets</Badge>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
             
-            {/* Caractéristiques */}
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-medium text-gray-900 mb-3">Caractéristiques</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {annonce.poids && (
-                  <div className="flex items-center">
-                    <ScaleIcon className="h-5 w-5 text-gray-400 mr-2" />
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">Poids</h3>
-                      <p className="text-gray-900">{annonce.poids} kg</p>
-                    </div>
-                  </div>
-                )}
+            {/* Colonne de droite: contact et actions */}
+            <div className="lg:col-span-1">
+              <div className="bg-gray-50 rounded-lg p-6 shadow-sm">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Contact</h3>
                 
-                {annonce.volume && (
-                  <div className="flex items-center">
-                    <CubeIcon className="h-5 w-5 text-gray-400 mr-2" />
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">Volume</h3>
-                      <p className="text-gray-900">{annonce.volume} m³</p>
+                {annonce.utilisateur && (
+                  <div className="flex items-center mb-4">
+                    <div className="flex-shrink-0 h-12 w-12">
+                      {annonce.utilisateur.photo ? (
+                        <img
+                          className="h-12 w-12 rounded-full object-cover"
+                          src={annonce.utilisateur.photo}
+                          alt={`${annonce.utilisateur.prenom} ${annonce.utilisateur.nom}`}
+                          onError={(e) => { e.target.src = "/images/default.jpg"; }}
+                        />
+                      ) : (
+                        <div className="h-12 w-12 rounded-full bg-teal-500 flex items-center justify-center text-white font-medium">
+                          {annonce.utilisateur.prenom ? annonce.utilisateur.prenom.charAt(0).toUpperCase() : '?'}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )}
-                
-                {(annonce.longueur || annonce.largeur || annonce.hauteur) && (
-                  <div className="flex items-center">
-                    <div className="h-5 w-5 flex items-center justify-center text-gray-400 mr-2">
-                      <span className="text-sm font-semibold">3D</span>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">Dimensions</h3>
-                      <p className="text-gray-900">
-                        {annonce.longueur ? `L: ${annonce.longueur} cm` : ''} 
-                        {annonce.largeur ? ` l: ${annonce.largeur} cm` : ''} 
-                        {annonce.hauteur ? ` H: ${annonce.hauteur} cm` : ''}
+                    <div className="ml-4">
+                      <h4 className="text-sm font-medium text-gray-900">
+                        {annonce.utilisateur.prenom} {annonce.utilisateur.nom}
+                      </h4>
+                      <p className="text-xs text-gray-500">
+                        Membre depuis {annonce.utilisateur.createdAt ? 
+                          safeFormatDate(annonce.utilisateur.createdAt, 'MMM yyyy') : 
+                          'Date inconnue'}
                       </p>
                     </div>
                   </div>
                 )}
                 
-                {annonce.prixMax && (
-                  <div className="flex items-center">
-                    <CurrencyEuroIcon className="h-5 w-5 text-gray-400 mr-2" />
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">Prix maximum</h3>
-                      <p className="text-gray-900">{annonce.prixMax} €</p>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="flex items-center">
-                  <ClockIcon className="h-5 w-5 text-gray-400 mr-2" />
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-500">Date de création</h3>
-                    <p className="text-gray-900">{formatDate(annonce.createdAt)}</p>
-                  </div>
-                </div>
-              </div>
-              
-              {annonce.instructions && (
-                <div className="mt-4">
-                  <h3 className="text-sm font-medium text-gray-500">Instructions particulières</h3>
-                  <p className="mt-1 text-gray-900 whitespace-pre-line">{annonce.instructions}</p>
-                </div>
-              )}
-            </div>
-            
-            {/* Formulaire de devis (pour les transporteurs) */}
-            {canSendDevis && (
-              <div className="px-6 py-4">
-                {!showDevisForm ? (
-                  <Button 
-                    variant="primary" 
-                    onClick={() => setShowDevisForm(true)}
-                    fullWidth
-                  >
-                    <TruckIcon className="h-5 w-5 mr-2" />
-                    Proposer un devis
-                  </Button>
+                {isAuthenticated ? (
+                  <>
+                    {showContactInfo ? (
+                      <div className="space-y-3 text-sm">
+                        {annonce.utilisateur?.email && (
+                          <div className="flex items-center">
+                            <EnvelopeIcon className="h-5 w-5 text-gray-400 mr-2" />
+                            <span>{annonce.utilisateur.email}</span>
+                          </div>
+                        )}
+                        {annonce.utilisateur?.telephone && (
+                          <div className="flex items-center">
+                            <PhoneIcon className="h-5 w-5 text-gray-400 mr-2" />
+                            <span>{annonce.utilisateur.telephone}</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <Button 
+                        variant="outline" 
+                        fullWidth 
+                        onClick={() => setShowContactInfo(true)}
+                      >
+                        Afficher les coordonnÃ©es
+                      </Button>
+                    )}
+                    
+                    {user?.role === 'transporteur' && annonce.statut === 'disponible' && (
+                      <Button 
+                        to={`/dashboard/devis/create/${annonce._id}`} 
+                        variant="primary" 
+                        fullWidth
+                        className="mt-3"
+                      >
+                        Proposer un devis
+                      </Button>
+                    )}
+                  </>
                 ) : (
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Proposer un devis</h3>
-                    <form onSubmit={handleSendDevis} className="space-y-4">
-                      <div>
-                        <label htmlFor="montant" className="block text-sm font-medium text-gray-700 mb-1">
-                          Montant (€) <span className="text-red-500">*</span>
-                        </label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <CurrencyEuroIcon className="h-5 w-5 text-gray-400" />
-                          </div>
-                          <input
-                            type="number"
-                            name="montant"
-                            id="montant"
-                            step="0.01"
-                            min="0"
-                            required
-                            className="block w-full pl-10 pr-12 sm:text-sm border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                            placeholder="0.00"
-                            value={devisData.montant}
-                            onChange={(e) => setDevisData({ ...devisData, montant: e.target.value })}
-                          />
-                          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                            <span className="text-gray-500 sm:text-sm">EUR</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <label htmlFor="delaiLivraison" className="block text-sm font-medium text-gray-700 mb-1">
-                          Date de livraison estimée <span className="text-red-500">*</span>
-                        </label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <CalendarIcon className="h-5 w-5 text-gray-400" />
-                          </div>
-                          <input
-                            type="date"
-                            name="delaiLivraison"
-                            id="delaiLivraison"
-                            required
-                            className="block w-full pl-10 sm:text-sm border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                            value={devisData.delaiLivraison ? format(new Date(devisData.delaiLivraison), 'yyyy-MM-dd') : ''}
-                            onChange={(e) => setDevisData({ ...devisData, delaiLivraison: new Date(e.target.value) })}
-                            min={format(new Date(), 'yyyy-MM-dd')}
-                          />
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
-                          Message <span className="text-red-500">*</span>
-                        </label>
-                        <textarea
-                          id="message"
-                          name="message"
-                          rows={4}
-                          required
-                          className="block w-full sm:text-sm border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                          placeholder="Présentez votre offre en détail..."
-                          value={devisData.message}
-                          onChange={(e) => setDevisData({ ...devisData, message: e.target.value })}
-                        ></textarea>
-                      </div>
-                      
-                      <div className="flex justify-end space-x-3">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setShowDevisForm(false)}
-                          disabled={isSendingDevis}
-                        >
-                          Annuler
-                        </Button>
-                        <Button
-                          type="submit"
-                          variant="primary"
-                          isLoading={isSendingDevis}
-                          disabled={isSendingDevis}
-                        >
-                          Envoyer le devis
-                        </Button>
-                      </div>
-                    </form>
+                  <div className="text-center">
+                    <p className="text-sm text-gray-600 mb-3">
+                      Connectez-vous pour contacter le client ou proposer un devis
+                    </p>
+                    <Button to="/login" variant="primary" fullWidth>
+                      Se connecter
+                    </Button>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Pas encore inscrit ? <Link to="/register" className="text-teal-600 hover:underline">CrÃ©er un compte</Link>
+                    </p>
                   </div>
                 )}
               </div>
-            )}
+            </div>
           </div>
         </div>
         
-        {/* Sidebar - Informations sur l'utilisateur et contact */}
-        <div>
-          {/* Carte utilisateur */}
-          <div className="bg-white shadow-sm rounded-lg overflow-hidden mb-6">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-medium text-gray-900">A propos du client</h2>
-            </div>
-            
-            <div className="px-6 py-4">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  {annonce.utilisateur.photo ? (
-                    <img 
-                      src={annonce.utilisateur.photo} 
-                      alt={`${annonce.utilisateur.prenom} ${annonce.utilisateur.nom}`}
-                      className="h-12 w-12 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="h-12 w-12 rounded-full bg-teal-500 flex items-center justify-center">
-                      <UserIcon className="h-6 w-6 text-white" />
-                    </div>
-                  )}
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-medium text-gray-900">
-                    {annonce.utilisateur.prenom} {annonce.utilisateur.nom}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    Membre depuis {format(new Date(annonce.utilisateur.createdAt), 'MMMM yyyy', { locale: fr })}
-                  </p>
-                </div>
-              </div>
-              
-              {/* Note et avis */}
-              {annonce.utilisateur.noteMoyenne && (
-                <div className="mt-4 flex items-center">
-                  <div className="flex">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <StarIcon
-                        key={star}
-                        className={`h-5 w-5 ${
-                          star <= Math.round(annonce.utilisateur.noteMoyenne)
-                            ? 'text-yellow-400'
-                            : 'text-gray-300'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <p className="ml-2 text-sm text-gray-700">
-                    {annonce.utilisateur.noteMoyenne.toFixed(1)} ({annonce.utilisateur.nbAvis || 0} avis)
-                  </p>
-                </div>
-              )}
-              
-              {/* Badges de confiance */}
-              <div className="mt-4">
-                <div className="flex items-center text-sm text-gray-500">
-                  <ShieldCheckIcon className="h-5 w-5 text-green-500 mr-1" />
-                  <span>Identité vérifiée</span>
-                </div>
-                <div className="flex items-center text-sm text-gray-500 mt-1">
-                  <ShieldCheckIcon className="h-5 w-5 text-green-500 mr-1" />
-                  <span>Email vérifié</span>
-                </div>
-                <div className="flex items-center text-sm text-gray-500 mt-1">
-                  <ShieldCheckIcon className="h-5 w-5 text-green-500 mr-1" />
-                  <span>Téléphone vérifié</span>
-                </div>
-              </div>
-              
-              {/* Lien vers le profil */}
-              <div className="mt-6">
-                <Button 
-                  to={`/transporteurs/${annonce.utilisateur._id}`} 
-                  variant="outline"
-                  fullWidth
-                >
-                  Voir le profil
-                </Button>
-              </div>
-            </div>
-          </div>
-          
-          {/* Formulaire de contact */}
-          {!isOwner && (
-            <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-lg font-medium text-gray-900">Contacter le client</h2>
-              </div>
-              
-              <div className="px-6 py-4">
-                {!isAuthenticated ? (
-                  <div className="text-center py-4">
-                    <ChatBubbleLeftRightIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500 mb-4">
-                      Connectez-vous pour contacter le client
-                    </p>
-                    <Button 
-                      to={`/login?redirect=/annonces/${annonce._id}`} 
-                      variant="primary"
-                    >
-                      Se connecter
-                    </Button>
-                  </div>
-                ) : (
-                  <form onSubmit={handleSendMessage} className="space-y-4">
-                    <div>
-                      <label htmlFor="contact-message" className="block text-sm font-medium text-gray-700 mb-1">
-                        Message <span className="text-red-500">*</span>
-                      </label>
-                      <textarea
-                        id="contact-message"
-                        name="contact-message"
-                        rows={4}
-                        required
-                        className="block w-full sm:text-sm border-gray-300 rounded-md focus:ring-teal-500 focus:border-teal-500"
-                        placeholder="Posez vos questions au client..."
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                      ></textarea>
-                    </div>
-                    
-                    <Button
-                      type="submit"
-                      variant="primary"
-                      fullWidth
-                      isLoading={isSendingMessage}
-                      disabled={isSendingMessage || !message.trim()}
-                    >
-                      <ChatBubbleLeftRightIcon className="h-5 w-5 mr-2" />
-                      Envoyer un message
-                    </Button>
-                  </form>
-                )}
-                
-                {/* Note d'information */}
-                <div className="mt-4 p-3 bg-blue-50 rounded-md">
-                  <p className="text-xs text-blue-700">
-                    En contactant le client, vous acceptez de respecter les règles de notre plateforme. 
-                    Les négociations et paiements doivent être effectués via Pro-Trans pour votre sécurité.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        {/* Annonces similaires (optionnel) */}
+        {/* Cette section pourrait Ãªtre ajoutÃ©e ultÃ©rieurement */}
       </div>
     </div>
   );

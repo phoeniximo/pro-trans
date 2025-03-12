@@ -164,6 +164,24 @@ const MesDevisPage = () => {
     }
   };
 
+  // Fonction utilitaire pour formater les dates de manière sécurisée
+  const safeFormatDate = (dateValue, formatString = 'dd MMM yyyy') => {
+    if (!dateValue) {
+      return 'Date non spécifiée';
+    }
+    
+    try {
+      const dateObj = new Date(dateValue);
+      if (isNaN(dateObj.getTime())) {
+        return 'Date non disponible';
+      }
+      return format(dateObj, formatString, { locale: fr });
+    } catch (error) {
+      console.error('Erreur lors du formatage de la date:', error);
+      return 'Date invalide';
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-6">
@@ -336,8 +354,13 @@ const MesDevisPage = () => {
         <div className="bg-white shadow rounded-lg overflow-hidden">
           <ul className="divide-y divide-gray-200">
             {devis.map((devis) => {
-              const otherParty = user.role === 'transporteur' ? devis.client : devis.transporteur;
-              const annonce = devis.annonce;
+              // Récupérer l'autre partie du devis avec une vérification de sécurité
+              const otherParty = user.role === 'transporteur' 
+                ? (devis.client || {}) 
+                : (devis.transporteur || {});
+              
+              // Récupérer l'annonce avec une vérification de sécurité
+              const annonce = devis.annonce || {};
               
               return (
                 <li key={devis._id} className="hover:bg-gray-50">
@@ -345,11 +368,11 @@ const MesDevisPage = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
                         <div className="flex-shrink-0">
-                          {otherParty.photo ? (
+                          {otherParty && otherParty.photo ? (
                             <img
                               className="h-10 w-10 rounded-full object-cover"
                               src={otherParty.photo}
-                              alt={`${otherParty.prenom} ${otherParty.nom}`}
+                              alt={`${otherParty.prenom || ''} ${otherParty.nom || ''}`}
                             />
                           ) : (
                             <div className="h-10 w-10 rounded-full bg-teal-500 flex items-center justify-center">
@@ -359,7 +382,7 @@ const MesDevisPage = () => {
                         </div>
                         <div className="ml-4">
                           <h3 className="text-lg font-medium text-gray-900">
-                            {otherParty.prenom} {otherParty.nom}
+                            {otherParty ? `${otherParty.prenom || ''} ${otherParty.nom || ''}` : 'Utilisateur inconnu'}
                           </h3>
                           <p className="text-sm text-gray-500">
                             {user.role === 'transporteur' ? 'Client' : 'Transporteur'}
@@ -368,10 +391,10 @@ const MesDevisPage = () => {
                       </div>
                       <div className="flex flex-col items-end space-y-1">
                         <span className="text-2xl font-bold text-gray-900">
-                          {devis.montant.toFixed(2)} €
+                          {devis.montant ? devis.montant.toFixed(2) : '0.00'} €
                         </span>
-                        <span className={`px-2 py-1 inline-flex text-xs font-medium rounded-full ${STATUT_DEVIS_COLORS[devis.statut]}`}>
-                          {STATUT_DEVIS_LABELS[devis.statut]}
+                        <span className={`px-2 py-1 inline-flex text-xs font-medium rounded-full ${STATUT_DEVIS_COLORS[devis.statut] || 'bg-gray-100 text-gray-800'}`}>
+                          {STATUT_DEVIS_LABELS[devis.statut] || 'Statut inconnu'}
                         </span>
                       </div>
                     </div>
@@ -383,10 +406,10 @@ const MesDevisPage = () => {
                           <h4 className="text-sm font-medium text-gray-700">Annonce</h4>
                         </div>
                         <div className="mt-1.5">
-                          <p className="text-sm font-medium text-gray-900">{annonce.titre}</p>
+                          <p className="text-sm font-medium text-gray-900">{annonce.titre || 'Titre non disponible'}</p>
                           <p className="text-xs text-gray-500 flex items-center mt-1">
                             <MapPinIcon className="h-4 w-4 text-gray-400 mr-1" />
-                            {annonce.villeDepart} → {annonce.villeArrivee}
+                            {annonce.villeDepart || '?'} → {annonce.villeArrivee || '?'}
                           </p>
                         </div>
                       </div>
@@ -400,13 +423,13 @@ const MesDevisPage = () => {
                           <div>
                             <p className="text-xs text-gray-500">Départ demandé</p>
                             <p className="text-sm text-gray-900">
-                              {format(new Date(annonce.dateDepart), 'dd MMM yyyy', { locale: fr })}
+                              {annonce.dateDepart ? safeFormatDate(annonce.dateDepart) : 'Non spécifié'}
                             </p>
                           </div>
                           <div>
                             <p className="text-xs text-gray-500">Livraison estimée</p>
                             <p className="text-sm text-gray-900">
-                              {format(new Date(devis.delaiLivraison), 'dd MMM yyyy', { locale: fr })}
+                              {devis.delaiLivraison ? safeFormatDate(devis.delaiLivraison) : 'Non spécifié'}
                             </p>
                           </div>
                         </div>
@@ -416,7 +439,7 @@ const MesDevisPage = () => {
                     <div className="mt-4">
                       <div className="flex items-center">
                         <div className="flex-1 text-sm text-gray-500">
-                          Devis créé le {format(new Date(devis.createdAt), 'dd MMMM yyyy', { locale: fr })}
+                          Devis créé le {devis.createdAt ? safeFormatDate(devis.createdAt, 'dd MMMM yyyy') : 'Date inconnue'}
                         </div>
                         <div className="flex space-x-2">
                           <Button

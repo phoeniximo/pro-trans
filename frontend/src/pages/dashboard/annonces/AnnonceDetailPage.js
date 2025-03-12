@@ -10,7 +10,7 @@ import { formatDate, formatCurrency } from '../../../utils/formatters';
 import { STATUT_ANNONCE_LABELS, STATUT_ANNONCE_COLORS } from '../../../utils/constants';
 import Button from '../../../components/ui/Button';
 
-// Fonction utilitaire pour la vérification des dates avant formatage
+// Fonction utilitaire pour la vérification des dates avant formatage - CORRIGÉE
 const safeFormatDate = (dateValue, formatString = 'dd MMMM yyyy') => {
   if (!dateValue) {
     return 'Date non spécifiée';
@@ -25,17 +25,14 @@ const safeFormatDate = (dateValue, formatString = 'dd MMMM yyyy') => {
       dateObj = dateValue;
     }
     
-    // Journalisation pour le débogage
-    console.log(`Formatage de date: "${dateValue}" -> ${dateObj}`);
-    
     // Vérification approfondie de la validité
-    if (!isValid(dateObj) || isNaN(dateObj.getTime())) {
+    if (isNaN(dateObj.getTime())) {
       console.warn(`Date invalide détectée: "${dateValue}"`);
       return 'Date non disponible';
     }
     
-    // Utiliser la fonction formatDate de l'utilitaire
-    return formatDate(dateObj, formatString);
+    // Utiliser la fonction format de date-fns directement
+    return format(dateObj, formatString, { locale: fr });
   } catch (error) {
     console.error('Erreur lors du formatage de la date:', error, dateValue);
     return 'Date invalide';
@@ -72,15 +69,15 @@ const AnnonceDetailPage = () => {
           // Nettoyage des dates potentiellement problématiques
           if (response.data) {
             // Si la date n'est pas valide, la définir comme null
-            if (response.data.dateDepart && !isValid(new Date(response.data.dateDepart))) {
+            if (response.data.dateDepart && isNaN(new Date(response.data.dateDepart).getTime())) {
               console.warn("Date de départ invalide détectée, nettoyage effectué");
               response.data.dateDepart = null;
             }
-            if (response.data.dateArrivee && !isValid(new Date(response.data.dateArrivee))) {
+            if (response.data.dateArrivee && isNaN(new Date(response.data.dateArrivee).getTime())) {
               console.warn("Date d'arrivée invalide détectée, nettoyage effectué");
               response.data.dateArrivee = null;
             }
-            if (response.data.createdAt && !isValid(new Date(response.data.createdAt))) {
+            if (response.data.createdAt && isNaN(new Date(response.data.createdAt).getTime())) {
               console.warn("Date de création invalide détectée, nettoyage effectué");
               response.data.createdAt = null;
             }
@@ -395,7 +392,7 @@ const AnnonceDetailPage = () => {
                   } 
                   // Si c'est un chemin relatif
                   else if (photo.startsWith('/uploads/')) {
-                    photoUrl = `http://${window.location.hostname}:5000${photo}`;
+                    photoUrl = `${apiBaseUrl}${photo}`;
                   } 
                   // Autre format
                   else {
@@ -411,7 +408,7 @@ const AnnonceDetailPage = () => {
                       className="object-cover w-full h-full"
                       onError={(e) => {
                         console.error(`Erreur de chargement de l'image: ${photoUrl}`);
-                        e.target.src = `${process.env.PUBLIC_URL}/default.jpg`; // Image par défaut
+                        e.target.src = `/images/default.jpg`; // Image par défaut corrigée
                       }}
                     />
                   </div>
@@ -421,6 +418,22 @@ const AnnonceDetailPage = () => {
           </div>
         )}
 
+        {/* Détails du transport */}
+        <div className="px-6 py-4 border-t border-gray-200">
+          <h2 className="text-lg font-medium text-gray-900 mb-3">Détails du transport</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">Adresse de départ</h3>
+              <p className="mt-1 text-gray-900 whitespace-pre-line">{annonce.villeDepart}</p>
+            </div>
+            
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">Adresse d'arrivée</h3>
+              <p className="mt-1 text-gray-900 whitespace-pre-line">{annonce.villeArrivee}</p>
+            </div>
+          </div>
+        </div>
+
         {/* Informations sur le client */}
         {annonce.utilisateur && (
           <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
@@ -429,7 +442,7 @@ const AnnonceDetailPage = () => {
               <div className="flex-shrink-0 h-10 w-10">
                 <img
                   className="h-10 w-10 rounded-full"
-                  src={annonce.utilisateur.photo || "/default.jpg"}
+                  src={annonce.utilisateur.photo || "/images/default.jpg"}
                   alt={`Photo de ${annonce.utilisateur.prenom}`}
                 />
               </div>
@@ -500,9 +513,9 @@ const AnnonceDetailPage = () => {
                           {devis.transporteur && (
                             <img
                               className="h-10 w-10 rounded-full"
-                              src={devis.transporteur.photo || "/default.jpg"}
+                              src={devis.transporteur.photo || "/images/default.jpg"}
                               alt={`Photo de ${devis.transporteur.prenom}`}
-                              onError={(e) => { e.target.src = "/default.jpg"; }}
+                              onError={(e) => { e.target.src = "/images/default.jpg"; }}
                             />
                           )}
                         </div>
