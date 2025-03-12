@@ -39,6 +39,21 @@ const safeFormatDate = (dateValue, formatString = 'dd MMMM yyyy') => {
   }
 };
 
+// Fonction utilitaire pour traiter de manière sécurisée la notation
+const safeGetNotation = (transporteur) => {
+  if (!transporteur || transporteur.notation === undefined || transporteur.notation === null) {
+    return 0;
+  }
+  
+  if (typeof transporteur.notation === 'number') {
+    return transporteur.notation;
+  } else if (typeof transporteur.notation === 'string' && !isNaN(parseFloat(transporteur.notation))) {
+    return parseFloat(transporteur.notation);
+  }
+  
+  return 0;
+};
+
 const AnnonceDetailPage = () => {
   const { id } = useParams();
   const [annonce, setAnnonce] = useState(null);
@@ -525,14 +540,17 @@ const AnnonceDetailPage = () => {
                               ? `${devis.transporteur.prenom} ${devis.transporteur.nom}`
                               : "Transporteur inconnu"}
                           </div>
-                          {devis.transporteur && devis.transporteur.notation && (
+                          {devis.transporteur && (
                             <div className="text-sm text-gray-500">
-                              {Array(5).fill().map((_, i) => (
-                                <span key={i} className={(i < Math.round(devis.transporteur.notation)) ? 'text-yellow-400' : 'text-gray-300'}>
-                                  ★
-                                </span>
-                              ))}
-                              <span className="ml-1">({devis.transporteur.notation.toFixed(1)})</span>
+                              {Array(5).fill().map((_, i) => {
+                                const rating = safeGetNotation(devis.transporteur);
+                                return (
+                                  <span key={i} className={(i < Math.round(rating)) ? 'text-yellow-400' : 'text-gray-300'}>
+                                    ★
+                                  </span>
+                                );
+                              })}
+                              <span className="ml-1">({safeGetNotation(devis.transporteur).toFixed(1)})</span>
                             </div>
                           )}
                         </div>
