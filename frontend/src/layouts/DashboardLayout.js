@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useMessage } from '../hooks/useMessage';
 import { 
   HomeIcon, 
   UserIcon, 
@@ -12,12 +13,14 @@ import {
   Bars3Icon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
+import NotificationBadge from '../components/ui/NotificationBadge';
 
 /**
  * Layout pour le tableau de bord
  */
 const DashboardLayout = () => {
   const { user, logout } = useAuth();
+  const { unreadCount } = useMessage();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
@@ -34,7 +37,13 @@ const DashboardLayout = () => {
     { name: 'Mes Annonces', href: '/dashboard/annonces', icon: DocumentTextIcon, roles: ['client'] },
     { name: 'Rechercher des annonces', href: '/annonces', icon: DocumentTextIcon, roles: ['transporteur'] },
     { name: 'Mes Devis', href: '/dashboard/devis', icon: TruckIcon, roles: ['client', 'transporteur'] },
-    { name: 'Messages', href: '/dashboard/messages', icon: ChatBubbleLeftRightIcon, roles: ['client', 'transporteur'] },
+    { 
+      name: 'Messages', 
+      href: '/dashboard/messages', 
+      icon: ChatBubbleLeftRightIcon, 
+      roles: ['client', 'transporteur'],
+      badge: unreadCount > 0
+    },
     { name: 'Avis', href: '/dashboard/avis', icon: StarIcon, roles: ['client', 'transporteur'] },
   ];
   
@@ -80,11 +89,21 @@ const DashboardLayout = () => {
                   className="group flex items-center px-2 py-2 text-base font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                   onClick={() => setSidebarOpen(false)}
                 >
-                  <item.icon
-                    className="mr-4 h-6 w-6 text-gray-400 group-hover:text-gray-500"
-                    aria-hidden="true"
-                  />
+                  <div className="relative">
+                    <item.icon
+                      className="mr-4 h-6 w-6 text-gray-400 group-hover:text-gray-500"
+                      aria-hidden="true"
+                    />
+                    {item.badge && item.name === 'Messages' && (
+                      <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-pulse"></span>
+                    )}
+                  </div>
                   {item.name}
+                  {item.badge && item.name === 'Messages' && unreadCount > 0 && (
+                    <span className="ml-auto bg-red-500 text-white text-xs font-semibold rounded-full h-5 w-5 flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
                 </Link>
               ))}
               <button
@@ -143,11 +162,21 @@ const DashboardLayout = () => {
                     to={item.href}
                     className="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                   >
-                    <item.icon
-                      className="mr-3 h-6 w-6 text-gray-400 group-hover:text-gray-500"
-                      aria-hidden="true"
-                    />
+                    <div className="relative">
+                      <item.icon
+                        className="mr-3 h-6 w-6 text-gray-400 group-hover:text-gray-500"
+                        aria-hidden="true"
+                      />
+                      {item.badge && item.name === 'Messages' && (
+                        <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full animate-pulse"></span>
+                      )}
+                    </div>
                     {item.name}
+                    {item.badge && item.name === 'Messages' && unreadCount > 0 && (
+                      <span className="ml-auto bg-red-500 text-white text-xs font-semibold rounded-full h-5 w-5 flex items-center justify-center">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
                   </Link>
                 ))}
                 <button

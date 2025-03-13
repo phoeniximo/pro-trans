@@ -15,7 +15,7 @@ const safeFormatDate = (dateValue, formatString = 'dd MMMM yyyy') => {
   if (!dateValue) {
     return 'Date non spécifiée';
   }
-  
+
   try {
     // Conversion en objet Date
     let dateObj;
@@ -24,13 +24,13 @@ const safeFormatDate = (dateValue, formatString = 'dd MMMM yyyy') => {
     } else {
       dateObj = dateValue;
     }
-    
+
     // Vérification approfondie de la validité
     if (isNaN(dateObj.getTime())) {
       console.warn(`Date invalide détectée: "${dateValue}"`);
       return 'Date non disponible';
     }
-    
+
     // Utiliser la fonction format de date-fns directement
     return format(dateObj, formatString, { locale: fr });
   } catch (error) {
@@ -44,13 +44,13 @@ const safeGetNotation = (transporteur) => {
   if (!transporteur || transporteur.notation === undefined || transporteur.notation === null) {
     return 0;
   }
-  
+
   if (typeof transporteur.notation === 'number') {
     return transporteur.notation;
   } else if (typeof transporteur.notation === 'string' && !isNaN(parseFloat(transporteur.notation))) {
     return parseFloat(transporteur.notation);
   }
-  
+
   return 0;
 };
 
@@ -67,10 +67,10 @@ const AnnonceDetailPage = () => {
       try {
         setLoading(true);
         const response = await annonceService.getAnnonceById(id);
-        
+
         // Debug logs améliorés
         console.log("Réponse complète de l'annonce:", response);
-        
+
         // Vérification spécifique des formats de date pour le débogage
         if (response.data) {
           console.log("Formats des dates dans l'annonce:", {
@@ -79,7 +79,7 @@ const AnnonceDetailPage = () => {
             dateArrivee: response.data.dateArrivee,
           });
         }
-        
+
         if (response.success) {
           // Nettoyage des dates potentiellement problématiques
           if (response.data) {
@@ -97,7 +97,7 @@ const AnnonceDetailPage = () => {
               response.data.createdAt = null;
             }
           }
-          
+
           setAnnonce(response.data);
           setError(null);
         } else {
@@ -233,7 +233,7 @@ const AnnonceDetailPage = () => {
             <ArrowLeftIcon className="h-5 w-5 mr-1" />
             Retour
           </Button>
-          
+
           {annonce.statut === 'disponible' && (
             <Button
               to={`/dashboard/annonces/${annonce._id}/edit`}
@@ -272,17 +272,17 @@ const AnnonceDetailPage = () => {
               <dt className="text-sm font-medium text-gray-500">Description</dt>
               <dd className="mt-1 text-sm text-gray-900 whitespace-pre-line">{annonce.description || 'Aucune description'}</dd>
             </div>
-            
+
             <div>
               <dt className="text-sm font-medium text-gray-500">Ville de départ</dt>
               <dd className="mt-1 text-sm text-gray-900">{annonce.villeDepart}</dd>
             </div>
-            
+
             <div>
               <dt className="text-sm font-medium text-gray-500">Ville d'arrivée</dt>
               <dd className="mt-1 text-sm text-gray-900">{annonce.villeArrivee}</dd>
             </div>
-            
+
             <div>
               <dt className="text-sm font-medium text-gray-500">Date de départ</dt>
               <dd className="mt-1 text-sm text-gray-900">{annonce.dateDepart ? safeFormatDate(annonce.dateDepart) : 'Date non spécifiée'}</dd>
@@ -397,28 +397,28 @@ const AnnonceDetailPage = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
               {annonce.photos.map((photo, index) => {
                 console.log(`Photo ${index}:`, photo);
-                
+
                 // Construire l'URL complète
                 let photoUrl = '';
                 if (typeof photo === 'string') {
                   // Si c'est une URL absolue
                   if (photo.startsWith('http')) {
                     photoUrl = photo;
-                  } 
+                  }
                   // Si c'est un chemin relatif
                   else if (photo.startsWith('/uploads/')) {
                     photoUrl = `${apiBaseUrl}${photo}`;
-                  } 
+                  }
                   // Autre format
                   else {
                     photoUrl = photo;
                   }
                 }
-                
+
                 return photoUrl ? (
                   <div key={index} className="aspect-w-1 aspect-h-1 rounded-lg bg-gray-100 overflow-hidden">
-                    <img 
-                      src={photoUrl} 
+                    <img
+                      src={photoUrl}
                       alt={`Photo ${index + 1}`}
                       className="object-cover w-full h-full"
                       onError={(e) => {
@@ -441,7 +441,7 @@ const AnnonceDetailPage = () => {
               <h3 className="text-sm font-medium text-gray-500">Adresse de départ</h3>
               <p className="mt-1 text-gray-900 whitespace-pre-line">{annonce.villeDepart}</p>
             </div>
-            
+
             <div>
               <h3 className="text-sm font-medium text-gray-500">Adresse d'arrivée</h3>
               <p className="mt-1 text-gray-900 whitespace-pre-line">{annonce.villeArrivee}</p>
@@ -564,11 +564,11 @@ const AnnonceDetailPage = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                        {devis.statut === 'accepte' ? 'Accepté' : 
-                         devis.statut === 'refuse' ? 'Refusé' : 
-                         devis.statut === 'en_attente' ? 'En attente' : 
-                         devis.statut === 'termine' ? 'Terminé' : 
-                         devis.statut}
+                        {devis.statut === 'accepte' ? 'Accepté' :
+                          devis.statut === 'refuse' ? 'Refusé' :
+                            devis.statut === 'en_attente' ? 'En attente' :
+                              devis.statut === 'termine' ? 'Terminé' :
+                                devis.statut}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

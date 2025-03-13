@@ -17,8 +17,10 @@ import { fr } from 'date-fns/locale';
 import apiClient from '../../../api/client';
 import Button from '../../../components/ui/Button';
 import { useAuth } from '../../../hooks/useAuth';
+import { useMessage } from '../../../hooks/useMessage';
 
 const MessagesPage = () => {
+  const { fetchConversations } = useMessage();
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -28,7 +30,7 @@ const MessagesPage = () => {
 
   // Chargement des conversations
   useEffect(() => {
-    const fetchConversations = async () => {
+    const loadConversations = async () => {
       try {
         setLoading(true);
         const response = await apiClient.get('/messages/conversations');
@@ -36,33 +38,35 @@ const MessagesPage = () => {
         setError(null);
       } catch (err) {
         console.error('Erreur lors du chargement des conversations:', err);
-        setError('Erreur lors du chargement des conversations. Veuillez rÈessayer.');
+        setError('Erreur lors du chargement des conversations. Veuillez r√©essayer.');
         toast.error('Erreur lors du chargement des conversations');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchConversations();
+    loadConversations();
   }, []);
 
-  // RafraÓchir les conversations
+  // Rafra√Æchir les conversations
   const refreshConversations = async () => {
     try {
       setLoading(true);
       const response = await apiClient.get('/messages/conversations');
       setConversations(response.data.data);
+      // Mise √† jour du contexte global des messages
+      await fetchConversations();
       setError(null);
-      toast.success('Conversations mises ‡ jour');
+      toast.success('Conversations mises √† jour');
     } catch (err) {
-      console.error('Erreur lors du rafraÓchissement des conversations:', err);
-      toast.error('Erreur lors du rafraÓchissement des conversations');
+      console.error('Erreur lors du rafra√Æchissement des conversations:', err);
+      toast.error('Erreur lors du rafra√Æchissement des conversations');
     } finally {
       setLoading(false);
     }
   };
 
-  // Calculer le temps ÈcoulÈ depuis le dernier message
+  // Calculer le temps √©coul√© depuis le dernier message
   const getTimeAgo = (date) => {
     const messageDate = new Date(date);
     const now = new Date();
@@ -78,7 +82,7 @@ const MessagesPage = () => {
     } else if (diffMinutes > 0) {
       return `Il y a ${diffMinutes} minute${diffMinutes > 1 ? 's' : ''}`;
     } else {
-      return 'A l\'instant';
+      return '√Ä l\'instant';
     }
   };
 
@@ -148,7 +152,7 @@ const MessagesPage = () => {
                 className="mt-2"
                 onClick={refreshConversations}
               >
-                RÈessayer
+                R√©essayer
               </Button>
             </div>
           </div>
@@ -165,15 +169,15 @@ const MessagesPage = () => {
             variant="primary"
             className="mt-4"
           >
-            {user.role === 'client' ? 'CrÈer une annonce' : 'Parcourir les annonces'}
+            {user.role === 'client' ? 'Cr√©er une annonce' : 'Parcourir les annonces'}
           </Button>
         </div>
       ) : filteredConversations.length === 0 ? (
         <div className="bg-white rounded-lg shadow-sm p-6 text-center">
           <MagnifyingGlassIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900">Aucun rÈsultat</h3>
+          <h3 className="text-lg font-medium text-gray-900">Aucun r√©sultat</h3>
           <p className="mt-2 text-gray-500">
-            Aucune conversation ne correspond ‡ votre recherche.
+            Aucune conversation ne correspond √† votre recherche.
           </p>
           <Button
             variant="outline"
@@ -189,12 +193,13 @@ const MessagesPage = () => {
             {filteredConversations.map((conversation) => {
               const otherUser = conversation.utilisateur;
               const conversationId = `${conversation.annonce._id}_${otherUser._id}`;
+              const hasUnreadMessages = conversation.nonLus > 0;
               
               return (
-                <li key={conversationId}>
+                <li key={conversationId} className={hasUnreadMessages ? "bg-teal-50" : ""}>
                   <Link 
                     to={`/dashboard/messages/${conversationId}`}
-                    className="block hover:bg-gray-50 transition duration-150 ease-in-out"
+                    className={`block hover:bg-gray-50 transition duration-150 ease-in-out ${hasUnreadMessages ? "border-l-4 border-teal-500" : ""}`}
                   >
                     <div className="px-6 py-4 flex items-center">
                       {/* Avatar de l'utilisateur */}
@@ -211,9 +216,9 @@ const MessagesPage = () => {
                           </div>
                         )}
                         
-                        {/* Badge pour messages non lus */}
-                        {conversation.nonLus > 0 && (
-                          <div className="absolute -top-1 -right-1 bg-red-500 rounded-full h-5 w-5 flex items-center justify-center">
+                        {/* Badge pour messages non lus - Am√©lior√© */}
+                        {hasUnreadMessages && (
+                          <div className="absolute -top-1 -right-1 bg-red-500 rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
                             <span className="text-xs text-white font-medium">
                               {conversation.nonLus > 9 ? '9+' : conversation.nonLus}
                             </span>
@@ -225,7 +230,7 @@ const MessagesPage = () => {
                       <div className="ml-4 flex-1 min-w-0">
                         <div className="flex justify-between items-start">
                           <div>
-                            <h3 className="text-base font-medium text-gray-900 truncate">
+                            <h3 className={`text-base ${hasUnreadMessages ? 'font-bold text-gray-900' : 'font-medium text-gray-900'} truncate`}>
                               {otherUser.prenom} {otherUser.nom}
                             </h3>
                             <p className="text-sm text-gray-500 mt-1 flex items-center">
@@ -234,13 +239,13 @@ const MessagesPage = () => {
                             </p>
                           </div>
                           <div className="flex flex-col items-end">
-                            <span className="text-xs text-gray-500">
+                            <span className={`text-xs ${hasUnreadMessages ? 'font-bold text-teal-700' : 'text-gray-500'}`}>
                               {conversation.dernierMessage ? getTimeAgo(conversation.dernierMessage.date) : ''}
                             </span>
                             {conversation.dernierMessage && conversation.dernierMessage.expediteur === user.id && (
                               <div className="flex items-center mt-1 text-xs text-gray-500">
                                 <span className="mr-1">
-                                  {conversation.dernierMessage.lu ? 'Lu' : 'EnvoyÈ'}
+                                  {conversation.dernierMessage.lu ? 'Lu' : 'Envoy√©'}
                                 </span>
                                 {conversation.dernierMessage.lu ? (
                                   <CheckCircleIcon className="h-4 w-4 text-green-500" />
@@ -254,13 +259,13 @@ const MessagesPage = () => {
                         
                         {/* Dernier message */}
                         {conversation.dernierMessage && (
-                          <p className={`mt-2 text-sm ${conversation.nonLus > 0 ? 'text-gray-900 font-medium' : 'text-gray-500'} truncate`}>
+                          <p className={`mt-2 text-sm ${hasUnreadMessages ? 'text-gray-900 font-semibold bg-teal-100 p-1 rounded' : 'text-gray-500'} truncate`}>
                             {truncateText(conversation.dernierMessage.contenu)}
                           </p>
                         )}
                       </div>
                       
-                      <ChevronRightIcon className="h-5 w-5 text-gray-400 ml-2" />
+                      <ChevronRightIcon className={`h-5 w-5 ${hasUnreadMessages ? 'text-teal-600' : 'text-gray-400'} ml-2`} />
                     </div>
                   </Link>
                 </li>

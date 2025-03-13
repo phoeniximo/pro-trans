@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { useMessage } from '../../hooks/useMessage';
 import { toast } from 'react-hot-toast';
 import { 
   DocumentTextIcon, 
@@ -19,6 +20,7 @@ import Avatar from '../../components/ui/Avatar';
 
 const DashboardPage = () => {
   const { user } = useAuth();
+  const { unreadCount } = useMessage();
   const [stats, setStats] = useState(null);
   const [recentItems, setRecentItems] = useState({
     annonces: [],
@@ -163,8 +165,11 @@ const DashboardPage = () => {
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">Messages non lus</dt>
                   <dd className="flex items-baseline">
-                    <div className="text-2xl font-semibold text-gray-900">
-                      {stats?.messages?.nonLus || 0}
+                    <div className="text-2xl font-semibold text-gray-900 relative">
+                      {unreadCount || stats?.messages?.nonLus || 0}
+                      {(unreadCount > 0 || stats?.messages?.nonLus > 0) && (
+                        <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 animate-pulse"></span>
+                      )}
                     </div>
                   </dd>
                 </dl>
@@ -330,7 +335,7 @@ const DashboardPage = () => {
                   </div>
                   <div className="flex flex-col items-end">
                     <span className="text-lg font-bold text-gray-900">
-                      {devis.montant.toFixed(2)} €
+                      {devis.montant.toFixed(2)} DH
                     </span>
                     <span className={`mt-1 px-2 py-1 text-xs font-medium rounded-full ${
                       devis.statut === 'en_attente' 
@@ -449,8 +454,11 @@ const DashboardPage = () => {
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">Messages non lus</dt>
                   <dd className="flex items-baseline">
-                    <div className="text-2xl font-semibold text-gray-900">
-                      {stats?.messages?.nonLus || 0}
+                    <div className="text-2xl font-semibold text-gray-900 relative">
+                      {unreadCount || stats?.messages?.nonLus || 0}
+                      {(unreadCount > 0 || stats?.messages?.nonLus > 0) && (
+                        <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-red-500 animate-pulse"></span>
+                      )}
                     </div>
                   </dd>
                 </dl>
@@ -606,7 +614,7 @@ const DashboardPage = () => {
                   </div>
                   <div className="flex flex-col items-end">
                     <span className="text-lg font-bold text-gray-900">
-                      {devis.montant.toFixed(2)} €
+                      {devis.montant.toFixed(2)} DH
                     </span>
                     <span className={`mt-1 px-2 py-1 text-xs font-medium rounded-full ${
                       devis.statut === 'en_attente' 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { toast } from 'react-hot-toast';
@@ -118,6 +118,7 @@ const CityAutoComplete = ({ name, label, value, onChange, error, touched, requir
 
 const CreateAnnoncePage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState(1);
   const [photos, setPhotos] = useState([]);
@@ -395,6 +396,29 @@ const CreateAnnoncePage = () => {
       }
     }
   });
+
+  // Récupérer les paramètres d'URL à l'initialisation
+  useEffect(() => {
+    // Récupérer les paramètres d'URL
+    const queryParams = new URLSearchParams(location.search);
+    
+    // Préremplir les champs du formulaire si les paramètres sont présents
+    const villeDepart = queryParams.get('villeDepart');
+    const villeArrivee = queryParams.get('villeArrivee');
+    const typeTransport = queryParams.get('typeTransport');
+    
+    if (villeDepart) {
+      formik.setFieldValue('villeDepart', villeDepart);
+    }
+    
+    if (villeArrivee) {
+      formik.setFieldValue('villeArrivee', villeArrivee);
+    }
+    
+    if (typeTransport) {
+      formik.setFieldValue('typeTransport', typeTransport);
+    }
+  }, [location.search]); // Dépendance à location.search pour réagir aux changements d'URL
 
   // Validation spécifique à l'étape en cours - MODIFIÉ pour simplifier la validation
   const validateStep = () => {

@@ -51,6 +51,17 @@ const annonceService = {
   // Récupérer une annonce par son ID
   getAnnonceById: async (id) => {
     try {
+      // MODIFICATION: Cas spécial pour la route de création d'annonce
+      if (id === 'create') {
+        console.log('Détection de la route de création - pas de requête API nécessaire');
+        return {
+          data: {
+            success: true,
+            data: { isNew: true, mode: 'creation' }
+          }
+        };
+      }
+      
       console.log(`Récupération de l'annonce ${id}`);
       const response = await apiClient.get(`/annonces/${id}`);
       

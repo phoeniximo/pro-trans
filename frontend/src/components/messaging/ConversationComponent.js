@@ -12,6 +12,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../../hooks/useAuth';
+import { useMessage } from '../../hooks/useMessage'; // Importation du hook useMessage
 import apiClient from '../../api/client';
 import Button from '../ui/Button';
 
@@ -26,6 +27,7 @@ const ConversationComponent = ({ annonceId, recipientId }) => {
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const { user } = useAuth();
+  const { markAsRead, fetchConversations } = useMessage(); // Utilisation du hook useMessage
 
   // Determine which ID to use (either from props or URL params)
   const effectiveAnnonceId = annonceId || (conversationId && conversationId.split('_')[0]);
@@ -43,12 +45,14 @@ const ConversationComponent = ({ annonceId, recipientId }) => {
         );
         setMessages(response.data.data);
         
-        // Mark messages as read
+        // Mark messages as read using the context function
         if (response.data.data.some(msg => !msg.lu && msg.expediteur._id !== user.id)) {
-          await apiClient.put(`/messages/mark-read/${effectiveAnnonceId}/${effectiveRecipientId}`);
+          await markAsRead(effectiveAnnonceId, effectiveRecipientId);
+          // Mise à jour globale des conversations
+          await fetchConversations();
         }
       } catch (err) {
-        console.error('Error fetching messages:', err);
+        console.error('Erreur lors du chargement des messages:', err);
         toast.error('Erreur lors du chargement des messages');
       } finally {
         setLoading(false);
@@ -62,7 +66,7 @@ const ConversationComponent = ({ annonceId, recipientId }) => {
         const response = await apiClient.get(`/users/profile/${effectiveRecipientId}`);
         setRecipient(response.data.data);
       } catch (err) {
-        console.error('Error fetching recipient info:', err);
+        console.error('Erreur lors du chargement des informations du destinataire:', err);
       }
     };
 
@@ -73,7 +77,7 @@ const ConversationComponent = ({ annonceId, recipientId }) => {
         const response = await apiClient.get(`/annonces/${effectiveAnnonceId}`);
         setAnnonce(response.data.data);
       } catch (err) {
-        console.error('Error fetching annonce info:', err);
+        console.error('Erreur lors du chargement des informations de l\'annonce:', err);
       }
     };
 
@@ -84,7 +88,7 @@ const ConversationComponent = ({ annonceId, recipientId }) => {
     // Set up message polling every 30 seconds
     const interval = setInterval(fetchMessages, 30000);
     return () => clearInterval(interval);
-  }, [effectiveAnnonceId, effectiveRecipientId, user.id]);
+  }, [effectiveAnnonceId, effectiveRecipientId, user.id, markAsRead, fetchConversations]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -182,8 +186,11 @@ const ConversationComponent = ({ annonceId, recipientId }) => {
       });
       setAttachments([]);
       
+      // Rafraîchir les conversations après l'envoi
+      await fetchConversations();
+      
     } catch (err) {
-      console.error('Error sending message:', err);
+      console.error('Erreur lors de l\'envoi du message:', err);
       toast.error('Erreur lors de l\'envoi du message');
     } finally {
       setLoading(false);
@@ -262,23 +269,27 @@ const ConversationComponent = ({ annonceId, recipientId }) => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
-              const fetchMessages = async () => {
-                try {
-                  setLoading(true);
-                  const response = await apiClient.get(
-                    `/messages/conversation/${effectiveAnnonceId}/${effectiveRecipientId}`
-                  );
-                  setMessages(response.data.data);
-                  toast.success('Messages mis à jour');
-                } catch (err) {
-                  console.error('Error refreshing messages:', err);
-                  toast.error('Erreur lors de l\'actualisation des messages');
-                } finally {
-                  setLoading(false);
+            onClick={async () => {
+              try {
+                setLoading(true);
+                const response = await apiClient.get(
+                  `/messages/conversation/${effectiveAnnonceId}/${effectiveRecipientId}`
+                );
+                setMessages(response.data.data);
+                
+                // Marquer les messages comme lus et mettre à jour les conversations
+                if (response.data.data.some(msg => !msg.lu && msg.expediteur._id !== user.id)) {
+                  await markAsRead(effectiveAnnonceId, effectiveRecipientId);
+                  await fetchConversations();
                 }
-              };
-              fetchMessages();
+                
+                toast.success('Messages mis à jour');
+              } catch (err) {
+                console.error('Erreur lors du rafraîchissement des messages:', err);
+                toast.error('Erreur lors de l\'actualisation des messages');
+              } finally {
+                setLoading(false);
+              }
             }}
           >
             <ArrowPathIcon className="h-4 w-4 mr-1" />
