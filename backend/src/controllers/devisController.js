@@ -643,12 +643,35 @@ exports.updateStatutTransport = async (req, res) => {
       };
     }
     
+    // Map devis status to valid tracking status
+    let trackingStatut;
+    switch(statut) {
+      case 'en_cours':
+        trackingStatut = 'pris_en_charge';
+        break;
+      case 'en_transit':
+        trackingStatut = 'en_transit';
+        break;
+      case 'en_livraison':
+        trackingStatut = 'en_livraison';
+        break;
+      case 'livre':
+      case 'termine':
+        trackingStatut = 'livre';
+        break;
+      case 'probleme':
+        trackingStatut = 'probleme';
+        break;
+      default:
+        trackingStatut = 'en_attente';
+    }
+    
     // Mettre à jour le statut du tracking
-    annonce.tracking.statut = statut;
+    annonce.tracking.statut = trackingStatut;
     
     // Ajouter une entrée dans l'historique du tracking
     annonce.tracking.historique.push({
-      statut,
+      statut: trackingStatut,
       date: new Date(),
       commentaire: commentaire || '',
       localisation: localisation || ''

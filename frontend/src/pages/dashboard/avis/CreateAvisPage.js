@@ -20,6 +20,27 @@ const CreateAvisPage = () => {
   const [error, setError] = useState(null);
   const [loadingData, setLoadingData] = useState(true);
 
+  // VÃ©rification de l'existence d'un avis
+  useEffect(() => {
+    const checkExistingAvis = async () => {
+      try {
+        console.log('VÃ©rification si avis existe dÃ©jÃ ');
+        const response = await avisService.checkAvisExists(userId, annonceId);
+        
+        if (response.exists) {
+          toast.error('Vous avez dÃ©jÃ  donnÃ© un avis pour cette annonce');
+          navigate('/dashboard/avis');
+          return;
+        }
+      } catch (err) {
+        console.error('Erreur lors de la vÃ©rification d\'avis existant:', err);
+        // Continuer malgrÃ© l'erreur
+      }
+    };
+    
+    checkExistingAvis();
+  }, [userId, annonceId, navigate]);
+
   // Validation du formulaire
   const validationSchema = Yup.object({
     note: Yup.number()
@@ -28,8 +49,8 @@ const CreateAvisPage = () => {
       .max(5, 'La note maximale est 5'),
     commentaire: Yup.string()
       .required('Le commentaire est obligatoire')
-      .min(10, 'Le commentaire doit comporter au moins 10 caractères')
-      .max(500, 'Le commentaire ne doit pas dépasser 500 caractères')
+      .min(10, 'Le commentaire doit comporter au moins 10 caractÃ¨res')
+      .max(500, 'Le commentaire ne doit pas dÃ©passer 500 caractÃ¨res')
   });
 
   // Initialisation du formulaire
@@ -50,12 +71,20 @@ const CreateAvisPage = () => {
           annonceId: annonceId
         };
         
-        await avisService.createAvis(avisData);
+        console.log('Soumission du formulaire avec donnÃ©es:', avisData);
         
-        toast.success('Votre avis a été publié avec succès');
-        navigate('/dashboard/avis');
+        const result = await avisService.createAvis(avisData);
+        
+        console.log('RÃ©sultat crÃ©ation avis:', result);
+        
+        toast.success('Votre avis a Ã©tÃ© publiÃ© avec succÃ¨s');
+        
+        // Aller directement Ã  la liste avec un dÃ©lai pour permettre Ã  l'API de se mettre Ã  jour
+        setTimeout(() => {
+          navigate('/dashboard/avis');
+        }, 1000);
       } catch (error) {
-        console.error('Erreur lors de la création de l\'avis:', error);
+        console.error('Erreur lors de la crÃ©ation de l\'avis:', error);
         toast.error(error.message || 'Erreur lors de la publication de l\'avis');
       } finally {
         setLoading(false);
@@ -63,24 +92,24 @@ const CreateAvisPage = () => {
     }
   });
 
-  // Récupération des informations du destinataire et de l'annonce
+  // RÃ©cupÃ©ration des informations du destinataire et de l'annonce
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoadingData(true);
         
-        // Récupérer les détails de l'utilisateur
+        // RÃ©cupÃ©rer les dÃ©tails de l'utilisateur
         const userResponse = await apiClient.get(`/users/profile/${userId}`);
         setDestinataire(userResponse.data.data);
         
-        // Récupérer les détails de l'annonce
+        // RÃ©cupÃ©rer les dÃ©tails de l'annonce
         if (annonceId) {
           const annonceResponse = await apiClient.get(`/annonces/${annonceId}`);
           setAnnonce(annonceResponse.data.data);
         }
       } catch (err) {
-        console.error('Erreur lors du chargement des données:', err);
-        setError('Impossible de charger les informations nécessaires');
+        console.error('Erreur lors du chargement des donnÃ©es:', err);
+        setError('Impossible de charger les informations nÃ©cessaires');
       } finally {
         setLoadingData(false);
       }
@@ -122,7 +151,7 @@ const CreateAvisPage = () => {
               </svg>
               <h3 className="mt-2 text-lg font-medium text-gray-900">Erreur</h3>
               <p className="mt-1 text-sm text-gray-500">
-                {error || "Impossible de charger les informations nécessaires"}
+                {error || "Impossible de charger les informations nÃ©cessaires"}
               </p>
               <div className="mt-6">
                 <Button
@@ -147,7 +176,7 @@ const CreateAvisPage = () => {
             Publier un avis
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Partagez votre expérience avec ce {destinataire.role === 'transporteur' ? 'transporteur' : 'client'}
+            Partagez votre expÃ©rience avec ce {destinataire.role === 'transporteur' ? 'transporteur' : 'client'}
           </p>
         </div>
         <div className="mt-4 flex md:mt-0 md:ml-4">
@@ -169,7 +198,7 @@ const CreateAvisPage = () => {
                 {destinataire.role === 'transporteur' ? 'Transporteur' : 'Client'}
               </h2>
               <p className="mt-1 text-sm text-gray-500">
-                Informations sur la personne que vous évaluez
+                Informations sur la personne que vous Ã©valuez
               </p>
             </div>
             <div className="border-t border-gray-200">
@@ -199,12 +228,12 @@ const CreateAvisPage = () => {
             </div>
           </div>
 
-          {/* Détails de l'annonce si disponible */}
+          {/* DÃ©tails de l'annonce si disponible */}
           {annonce && (
             <div className="mt-8 bg-white shadow overflow-hidden rounded-lg">
               <div className="px-4 py-5 sm:px-6">
                 <h2 className="text-lg font-medium text-gray-900">
-                  Détails de l'annonce
+                  DÃ©tails de l'annonce
                 </h2>
               </div>
               <div className="border-t border-gray-200">
@@ -229,7 +258,7 @@ const CreateAvisPage = () => {
                         Trajet
                       </dt>
                       <dd className="mt-1 text-sm text-gray-900">
-                        {annonce.villeDepart} ? {annonce.villeArrivee}
+                        {annonce.villeDepart} â†’ {annonce.villeArrivee}
                       </dd>
                     </div>
                     <div className="sm:col-span-2">
@@ -291,13 +320,13 @@ const CreateAvisPage = () => {
                     name="commentaire"
                     rows={6}
                     className="shadow-sm focus:ring-teal-500 focus:border-teal-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                    placeholder="Partagez votre expérience..."
+                    placeholder="Partagez votre expÃ©rience..."
                     value={formik.values.commentaire}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                   />
                   <p className="mt-2 text-sm text-gray-500">
-                    {formik.values.commentaire.length}/500 caractères
+                    {formik.values.commentaire.length}/500 caractÃ¨res
                   </p>
                   {formik.touched.commentaire && formik.errors.commentaire && (
                     <p className="mt-2 text-sm text-red-600">{formik.errors.commentaire}</p>
@@ -328,16 +357,16 @@ const CreateAvisPage = () => {
 
           {/* Conseils pour un bon avis */}
           <div className="mt-8 bg-blue-50 rounded-lg p-6">
-            <h3 className="text-lg font-medium text-blue-800 mb-3">Conseils pour rédiger un avis utile</h3>
+            <h3 className="text-lg font-medium text-blue-800 mb-3">Conseils pour rÃ©diger un avis utile</h3>
             <ul className="list-disc pl-5 text-blue-700 space-y-2">
-              <li>Soyez honnête et objectif dans votre évaluation</li>
-              <li>Détaillez les aspects positifs et négatifs de votre expérience</li>
-              <li>Mentionnez les éléments spécifiques qui vous ont marqué (ponctualité, communication, état des marchandises à l'arrivée...)</li>
-              <li>Evitez les commentaires trop généraux comme "Très bien" ou "Mauvais service"</li>
-              <li>Restez respectueux, même en cas d'expérience négative</li>
+              <li>Soyez honnÃªte et objectif dans votre Ã©valuation</li>
+              <li>DÃ©taillez les aspects positifs et nÃ©gatifs de votre expÃ©rience</li>
+              <li>Mentionnez les Ã©lÃ©ments spÃ©cifiques qui vous ont marquÃ© (ponctualitÃ©, communication, Ã©tat des marchandises Ã  l'arrivÃ©e...)</li>
+              <li>Evitez les commentaires trop gÃ©nÃ©raux comme "TrÃ¨s bien" ou "Mauvais service"</li>
+              <li>Restez respectueux, mÃªme en cas d'expÃ©rience nÃ©gative</li>
             </ul>
             <p className="mt-4 text-sm text-blue-800">
-              Vos avis aident les autres utilisateurs à prendre des décisions éclairées et permettent aux transporteurs d'améliorer leurs services.
+              Vos avis aident les autres utilisateurs Ã  prendre des dÃ©cisions Ã©clairÃ©es et permettent aux transporteurs d'amÃ©liorer leurs services.
             </p>
           </div>
         </div>

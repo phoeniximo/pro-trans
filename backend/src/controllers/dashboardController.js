@@ -31,7 +31,7 @@ exports.getClientDashboard = async (req, res) => {
         nonLus: await Message.countDocuments({ destinataire: userId, lu: false })
       },
       avis: {
-        total: await Avis.countDocuments({ destinataire: userId })
+        total: await Avis.countDocuments({ auteur: userId })
       }
     };
     

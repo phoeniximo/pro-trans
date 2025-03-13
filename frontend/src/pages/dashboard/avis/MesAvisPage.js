@@ -16,7 +16,9 @@ import { formatDate } from '../../../utils/formatters';
 
 const MesAvisPage = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('recus');
+  // Définir l'onglet actif par défaut en fonction du rôle de l'utilisateur
+  const defaultTab = user.role === 'client' ? 'donnes' : 'recus';
+  const [activeTab, setActiveTab] = useState(defaultTab);
   const [avis, setAvis] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -35,22 +37,76 @@ const MesAvisPage = () => {
         let response;
         
         if (activeTab === 'recus') {
-          response = await avisService.getAvisRecus(page, limit);
+          response = await avisService.getAvisRecus(page, limit, true); // Forcer l'actualisation
         } else {
-          response = await avisService.getAvisDonnes(page, limit);
+          response = await avisService.getAvisDonnes(page, limit, true); // Forcer l'actualisation
         }
         
-        // Vérifier si response.data existe et a la structure attendue
-        if (response && response.data) {
-          setAvis(response.data.data || []);
-          setTotalPages(response.data.pages || 1);
-          setTotalAvis(response.data.total || 0);
+        // Vérifier si response existe et a la structure attendue
+        if (response) {
+          console.log("Réponse complète du service d'avis:", response);
+          
+          // Garantir que les données sont dans le format attendu
+          let avisData = [];
+          
+          // Déterminer où sont les données dans la réponse
+          if (Array.isArray(response.data)) {
+            avisData = response.data;
+          } else if (response.data && Array.isArray(response.data.data)) {
+            avisData = response.data.data;
+          } else if (response && Array.isArray(response)) {
+            avisData = response;
+          }
+          
+          console.log("Données d'avis avant normalisation:", avisData);
+          
+          // Vérifier que chaque avis a les propriétés essentielles
+          const normalizedAvis = avisData.map(avis => {
+            // Créer un objet normalisé avec des valeurs par défaut
+            return {
+              _id: avis._id || `temp-${Date.now()}-${Math.random()}`,
+              note: avis.note || 0,
+              commentaire: avis.commentaire || '',
+              createdAt: avis.createdAt || new Date().toISOString(),
+              destinataire: avis.destinataire || { 
+                _id: 'unknown',
+                prenom: 'Utilisateur',
+                nom: 'Inconnu',
+                photo: null
+              },
+              auteur: avis.auteur || { 
+                _id: 'unknown',
+                prenom: 'Utilisateur',
+                nom: 'Inconnu',
+                photo: null
+              },
+              annonce: avis.annonce || { 
+                _id: 'unknown',
+                titre: 'Annonce inconnue',
+                villeDepart: '',
+                villeArrivee: ''
+              }
+            };
+          });
+          
+          console.log("Avis normalisés:", normalizedAvis);
+          setAvis(normalizedAvis);
+          
+          // Définir les valeurs de pagination en fonction de la structure de la réponse
+          if (response.data && typeof response.data.pages !== 'undefined') {
+            setTotalPages(response.data.pages || 1);
+            setTotalAvis(response.data.total || 0);
+          } else {
+            setTotalPages(1);
+            setTotalAvis(normalizedAvis.length);
+          }
+          
           setError(null);
         } else {
           throw new Error('Format de réponse inattendu');
         }
       } catch (err) {
-        console.error('Erreur lors du chargement des avis:', err);
+        console.error('Erreur détaillée lors du chargement des avis:', err);
         setError('Impossible de charger les avis');
         toast.error('Erreur lors du chargement des avis');
         // S'assurer que l'état des avis est toujours un tableau même en cas d'erreur
@@ -71,7 +127,7 @@ const MesAvisPage = () => {
 
   // Affichage du statut de l'avis
   const renderAvisStatus = (avu) => {
-    if (!avu.annonce) {
+    if (!avu.annonce || !avu.annonce._id || avu.annonce._id === 'unknown') {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
           Annonce supprimée
@@ -96,23 +152,74 @@ const MesAvisPage = () => {
       let response;
       
       if (activeTab === 'recus') {
-        response = await avisService.getAvisRecus(1, limit);
+        response = await avisService.getAvisRecus(1, limit, true); // Force refresh
       } else {
-        response = await avisService.getAvisDonnes(1, limit);
+        response = await avisService.getAvisDonnes(1, limit, true); // Force refresh
       }
       
-      // Vérifier si response.data existe et a la structure attendue
-      if (response && response.data) {
-        setAvis(response.data.data || []);
-        setTotalPages(response.data.pages || 1);
-        setTotalAvis(response.data.total || 0);
+      // Vérifier si response existe et a la structure attendue
+      if (response) {
+        console.log("Rafraîchissement - Réponse complète:", response);
+        
+        // Garantir que les données sont dans le format attendu
+        let avisData = [];
+        
+        // Déterminer où sont les données dans la réponse
+        if (Array.isArray(response.data)) {
+          avisData = response.data;
+        } else if (response.data && Array.isArray(response.data.data)) {
+          avisData = response.data.data;
+        } else if (response && Array.isArray(response)) {
+          avisData = response;
+        }
+        
+        // Vérifier que chaque avis a les propriétés essentielles
+        const normalizedAvis = avisData.map(avis => {
+          // Créer un objet normalisé avec des valeurs par défaut
+          return {
+            _id: avis._id || `temp-${Date.now()}-${Math.random()}`,
+            note: avis.note || 0,
+            commentaire: avis.commentaire || '',
+            createdAt: avis.createdAt || new Date().toISOString(),
+            destinataire: avis.destinataire || { 
+              _id: 'unknown', 
+              prenom: 'Utilisateur', 
+              nom: 'Inconnu',
+              photo: null 
+            },
+            auteur: avis.auteur || { 
+              _id: 'unknown', 
+              prenom: 'Utilisateur', 
+              nom: 'Inconnu',
+              photo: null 
+            },
+            annonce: avis.annonce || { 
+              _id: 'unknown', 
+              titre: 'Annonce inconnue',
+              villeDepart: '',
+              villeArrivee: ''
+            }
+          };
+        });
+        
+        setAvis(normalizedAvis);
+        
+        // Définir les valeurs de pagination
+        if (response.data && typeof response.data.pages !== 'undefined') {
+          setTotalPages(response.data.pages || 1);
+          setTotalAvis(response.data.total || 0);
+        } else {
+          setTotalPages(1);
+          setTotalAvis(normalizedAvis.length);
+        }
+        
         setError(null);
         toast.success('Avis actualisés');
       } else {
         throw new Error('Format de réponse inattendu');
       }
     } catch (err) {
-      console.error('Erreur lors du chargement des avis:', err);
+      console.error('Erreur détaillée lors du rafraîchissement des avis:', err);
       setError('Impossible de charger les avis');
       toast.error('Erreur lors du chargement des avis');
       // S'assurer que l'état des avis est toujours un tableau même en cas d'erreur
@@ -130,7 +237,9 @@ const MesAvisPage = () => {
             Mes avis
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Gérez les avis que vous avez reçus et donnés
+            {user.role === 'client' 
+              ? 'Gérez les avis que vous avez donnés aux transporteurs'
+              : 'Gérez les avis que vous avez reçus de vos clients'}
           </p>
         </div>
         <div className="mt-4 flex md:mt-0 md:ml-4">
@@ -147,31 +256,41 @@ const MesAvisPage = () => {
         </div>
       </div>
 
-      {/* Onglets */}
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="flex -mb-px">
-          <button
-            className={`mr-8 py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'recus'
-                ? 'border-teal-500 text-teal-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-            onClick={() => handleTabChange('recus')}
-          >
-            Avis reçus
-          </button>
-          <button
-            className={`mr-8 py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'donnes'
-                ? 'border-teal-500 text-teal-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-            onClick={() => handleTabChange('donnes')}
-          >
-            Avis donnés
-          </button>
-        </nav>
-      </div>
+      {/* Onglets - Affichés uniquement pour les administrateurs */}
+      {user.role === 'admin' && (
+        <div className="border-b border-gray-200 mb-6">
+          <nav className="flex -mb-px">
+            <button
+              className={`mr-8 py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'recus'
+                  ? 'border-teal-500 text-teal-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+              onClick={() => handleTabChange('recus')}
+            >
+              Avis reçus
+            </button>
+            <button
+              className={`mr-8 py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'donnes'
+                  ? 'border-teal-500 text-teal-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+              onClick={() => handleTabChange('donnes')}
+            >
+              Avis donnés
+            </button>
+          </nav>
+        </div>
+      )}
+
+      {/* Information de débogage */}
+      {!loading && !error && (
+        <div className="mb-4 bg-blue-50 p-2 rounded text-xs text-blue-700 border border-blue-100">
+          <p>Affichage de {avis.length} avis sur un total de {totalAvis}</p>
+          <p>Mode: {activeTab === 'recus' ? 'Avis reçus' : 'Avis donnés'}</p>
+        </div>
+      )}
 
       {/* Liste des avis */}
       <div className="bg-white shadow overflow-hidden sm:rounded-lg">
@@ -370,35 +489,66 @@ const MesAvisPage = () => {
         )}
       </div>
 
-      {/* Importance des avis */}
+      {/* Informations sur l'importance des avis */}
       <div className="mt-8 bg-blue-50 rounded-lg p-6">
         <h3 className="text-lg font-medium text-blue-800 mb-3">Importance des avis pour votre réputation</h3>
         <p className="text-blue-700 mb-4">
-          Les avis sont essentiels pour établir votre réputation sur Pro-Trans. Ils aident les nouveaux clients à faire confiance à vos services et à prendre une décision éclairée.
+          {user.role === 'client'
+            ? "Vos avis sont essentiels pour aider d'autres clients à choisir des transporteurs fiables. Prenez le temps de donner des avis détaillés et constructifs."
+            : "Les avis sont essentiels pour établir votre réputation sur Pro-Trans. Ils aident les nouveaux clients à faire confiance à vos services et à prendre une décision éclairée."
+          }
         </p>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-white p-4 rounded-md shadow-sm">
-            <h4 className="font-medium text-blue-800 mb-2">Comment améliorer vos avis ?</h4>
-            <ul className="list-disc pl-5 text-sm text-blue-700 space-y-1">
-              <li>Communiquez clairement avec vos clients</li>
-              <li>Respectez les délais convenus</li>
-              <li>Soyez professionnel et courtois</li>
-              <li>Prenez soin des marchandises transportées</li>
-              <li>Résolvez rapidement les problèmes éventuels</li>
-            </ul>
-          </div>
-          
-          <div className="bg-white p-4 rounded-md shadow-sm">
-            <h4 className="font-medium text-blue-800 mb-2">Que faire en cas d'avis négatif ?</h4>
-            <ul className="list-disc pl-5 text-sm text-blue-700 space-y-1">
-              <li>Ne réagissez pas à chaud</li>
-              <li>Contactez le client pour comprendre son insatisfaction</li>
-              <li>Proposez une solution concrète au problème signalé</li>
-              <li>Apprenez de cette expérience pour l'avenir</li>
-              <li>Contactez notre service client si vous estimez l'avis injustifié</li>
-            </ul>
-          </div>
+          {user.role === 'transporteur' ? (
+            <>
+              <div className="bg-white p-4 rounded-md shadow-sm">
+                <h4 className="font-medium text-blue-800 mb-2">Comment améliorer vos avis ?</h4>
+                <ul className="list-disc pl-5 text-sm text-blue-700 space-y-1">
+                  <li>Communiquez clairement avec vos clients</li>
+                  <li>Respectez les délais convenus</li>
+                  <li>Soyez professionnel et courtois</li>
+                  <li>Prenez soin des marchandises transportées</li>
+                  <li>Résolvez rapidement les problèmes éventuels</li>
+                </ul>
+              </div>
+              
+              <div className="bg-white p-4 rounded-md shadow-sm">
+                <h4 className="font-medium text-blue-800 mb-2">Que faire en cas d'avis négatif ?</h4>
+                <ul className="list-disc pl-5 text-sm text-blue-700 space-y-1">
+                  <li>Ne réagissez pas à chaud</li>
+                  <li>Contactez le client pour comprendre son insatisfaction</li>
+                  <li>Proposez une solution concrète au problème signalé</li>
+                  <li>Apprenez de cette expérience pour l'avenir</li>
+                  <li>Contactez notre service client si vous estimez l'avis injustifié</li>
+                </ul>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="bg-white p-4 rounded-md shadow-sm">
+                <h4 className="font-medium text-blue-800 mb-2">Comment rédiger un bon avis ?</h4>
+                <ul className="list-disc pl-5 text-sm text-blue-700 space-y-1">
+                  <li>Soyez précis sur les aspects positifs et négatifs</li>
+                  <li>Mentionnez la ponctualité et la communication</li>
+                  <li>Décrivez l'état des marchandises à l'arrivée</li>
+                  <li>Évaluez le professionnalisme du transporteur</li>
+                  <li>Donnez des détails qui aideront d'autres clients</li>
+                </ul>
+              </div>
+              
+              <div className="bg-white p-4 rounded-md shadow-sm">
+                <h4 className="font-medium text-blue-800 mb-2">Pourquoi vos avis sont importants</h4>
+                <ul className="list-disc pl-5 text-sm text-blue-700 space-y-1">
+                  <li>Ils aident d'autres clients à choisir un transporteur fiable</li>
+                  <li>Ils encouragent les bons transporteurs à maintenir leur qualité</li>
+                  <li>Ils contribuent à l'amélioration des services</li>
+                  <li>Ils renforcent la confiance dans la plateforme</li>
+                  <li>Ils permettent aux transporteurs de s'améliorer</li>
+                </ul>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

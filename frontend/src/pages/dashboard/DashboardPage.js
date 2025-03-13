@@ -190,7 +190,7 @@ const DashboardPage = () => {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Avis Reçus</dt>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Avis Donnés</dt>
                   <dd className="flex items-baseline">
                     <div className="text-2xl font-semibold text-gray-900">
                       {stats?.avis?.total || 0}
@@ -335,15 +335,25 @@ const DashboardPage = () => {
                     <span className={`mt-1 px-2 py-1 text-xs font-medium rounded-full ${
                       devis.statut === 'en_attente' 
                         ? 'bg-yellow-100 text-yellow-800' 
-                        : devis.statut === 'accepte' 
+                        : devis.statut === 'accepte' || devis.statut === 'en_cours' || devis.statut === 'en_transit' || devis.statut === 'en_livraison'
                           ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
+                          : devis.statut === 'livre' || devis.statut === 'termine'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-red-100 text-red-800'
                     }`}>
                       {devis.statut === 'en_attente' 
                         ? 'En attente' 
                         : devis.statut === 'accepte' 
-                          ? 'Accepté' 
-                          : 'Refusé'}
+                          ? 'Accepté'
+                          : devis.statut === 'en_cours'
+                            ? 'En cours'
+                            : devis.statut === 'en_transit'
+                              ? 'En transit'
+                              : devis.statut === 'en_livraison'
+                                ? 'En livraison'
+                                : devis.statut === 'livre' || devis.statut === 'termine'
+                                  ? 'Livré'
+                                  : 'Refusé'}
                     </span>
                   </div>
                 </div>
@@ -601,15 +611,25 @@ const DashboardPage = () => {
                     <span className={`mt-1 px-2 py-1 text-xs font-medium rounded-full ${
                       devis.statut === 'en_attente' 
                         ? 'bg-yellow-100 text-yellow-800' 
-                        : devis.statut === 'accepte' 
+                        : devis.statut === 'accepte' || devis.statut === 'en_cours' || devis.statut === 'en_transit' || devis.statut === 'en_livraison'
                           ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
+                          : devis.statut === 'livre' || devis.statut === 'termine'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-red-100 text-red-800'
                     }`}>
                       {devis.statut === 'en_attente' 
                         ? 'En attente' 
                         : devis.statut === 'accepte' 
-                          ? 'Accepté' 
-                          : 'Refusé'}
+                          ? 'Accepté'
+                          : devis.statut === 'en_cours'
+                            ? 'En cours'
+                            : devis.statut === 'en_transit'
+                              ? 'En transit'
+                              : devis.statut === 'en_livraison'
+                                ? 'En livraison'
+                                : devis.statut === 'livre' || devis.statut === 'termine'
+                                  ? 'Livré'
+                                  : 'Refusé'}
                     </span>
                   </div>
                 </div>

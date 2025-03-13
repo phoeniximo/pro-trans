@@ -19,4 +19,7 @@ router.get('/donnes', avisController.getAvisDonnes);
 // Obtenir les avis reçus par l'utilisateur connecté
 router.get('/recus', avisController.getAvisRecus);
 
+// Vérifier si un avis existe déjà
+router.get('/check/:destinataireId/:annonceId', avisController.checkAvisExists);
+
 module.exports = router;

@@ -2,6 +2,7 @@
 const Avis = require('../models/Avis');
 const User = require('../models/User');
 const Annonce = require('../models/Annonce');
+const Devis = require('../models/Devis'); // Ajout pour vérifier le statut du devis
 const mongoose = require('mongoose');
 
 // @desc    Créer un nouvel avis
@@ -9,6 +10,9 @@ const mongoose = require('mongoose');
 // @access  Privé
 exports.createAvis = async (req, res) => {
   try {
+    console.log("Création d'avis - Données reçues:", req.body);
+    console.log("Utilisateur:", req.user.id);
+    
     const { note, commentaire, destinataireId, annonceId } = req.body;
 
     // Vérifier si l'ID du destinataire est valide
@@ -27,7 +31,7 @@ exports.createAvis = async (req, res) => {
       });
     }
 
-    // Vérifier si l'annonce existe et est terminée
+    // Vérifier si l'annonce existe
     const annonce = await Annonce.findById(annonceId);
     
     if (!annonce) {
@@ -37,16 +41,47 @@ exports.createAvis = async (req, res) => {
       });
     }
     
-    if (annonce.statut !== 'termine') {
+    // Vérifier le statut de l'annonce ou du devis associé
+    let statutOk = false;
+    
+    if (annonce.statut === 'termine') {
+      statutOk = true;
+    } else {
+      // Vérifier si un devis lié à cette annonce est au statut "livre" ou "termine"
+      const devis = await Devis.findOne({
+        annonce: annonceId,
+        $or: [{ statut: 'livre' }, { statut: 'termine' }]
+      });
+      
+      if (devis) {
+        statutOk = true;
+        console.log("Devis trouvé au statut acceptable:", devis.statut);
+      }
+    }
+    
+    if (!statutOk) {
       return res.status(400).json({
         success: false,
-        message: 'Vous ne pouvez donner un avis que pour une annonce terminée'
+        message: 'Vous ne pouvez donner un avis que pour une livraison terminée'
       });
     }
 
     // Vérifier si l'utilisateur est impliqué dans l'annonce
     const estClient = annonce.utilisateur.toString() === req.user.id;
-    const estTransporteur = false; // À compléter avec la logique pour vérifier si l'utilisateur est le transporteur choisi
+    
+    // Vérifier si l'utilisateur est le transporteur choisi
+    let estTransporteur = false;
+    const devisAccepte = await Devis.findOne({
+      annonce: annonceId,
+      transporteur: req.user.id,
+      $or: [{ statut: 'accepte' }, { statut: 'en_cours' }, { statut: 'livre' }, { statut: 'termine' }]
+    });
+    
+    if (devisAccepte) {
+      estTransporteur = true;
+    }
+    
+    console.log("Vérification des rôles:", { estClient, estTransporteur });
 
     if (!estClient && !estTransporteur) {
       return res.status(403).json({
@@ -78,17 +113,30 @@ exports.createAvis = async (req, res) => {
     });
 
     const nouvelAvis = await avis.save();
+    console.log("Nouvel avis créé avec ID:", nouvelAvis._id);
 
     // Mettre à jour la notation moyenne du destinataire
     const destinataire = await User.findById(destinataireId);
-    const tousLesAvis = await Avis.find({ destinataire: destinataireId });
-    
-    const sommeNotes = tousLesAvis.reduce((acc, avis) => acc + avis.note, 0);
-    const nouvelleNote = sommeNotes / tousLesAvis.length;
-    
-    destinataire.notation.moyenne = parseFloat(nouvelleNote.toFixed(1));
-    destinataire.notation.nombreAvis = tousLesAvis.length;
-    await destinataire.save();
+    if (!destinataire) {
+      console.error(`Destinataire introuvable: ${destinataireId}`);
+      // Continuer malgré l'erreur, l'avis est déjà créé
+    } else {
+      const tousLesAvis = await Avis.find({ destinataire: destinataireId });
+      
+      if (tousLesAvis && tousLesAvis.length > 0) {
+        const sommeNotes = tousLesAvis.reduce((acc, avisItem) => acc + avisItem.note, 0);
+        const nouvelleNote = sommeNotes / tousLesAvis.length;
+        
+        if (!destinataire.notation) {
+          destinataire.notation = {};
+        }
+        
+        destinataire.notation.moyenne = parseFloat(nouvelleNote.toFixed(1));
+        destinataire.notation.nombreAvis = tousLesAvis.length;
+        await destinataire.save();
+        console.log("Notation mise à jour pour", destinataireId, ":", destinataire.notation);
+      }
+    }
 
     // Récupérer l'avis complet avec les informations de l'auteur et du destinataire
     const avisComplet = await Avis.findById(nouvelAvis._id)
@@ -129,6 +177,9 @@ exports.getAvisUtilisateur = async (req, res) => {
   try {
     const { userId } = req.params;
     const { limit = 10, page = 1 } = req.query;
+    
+    console.log("Récupération des avis pour l'utilisateur:", userId);
+    console.log("Paramètres:", { limit, page });
 
     // Vérifier si l'ID utilisateur est valide
     if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -149,9 +200,11 @@ exports.getAvisUtilisateur = async (req, res) => {
 
     // Pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
+    console.log("Pagination:", { skip, limit: parseInt(limit) });
 
     // Compter le total pour la pagination
     const total = await Avis.countDocuments({ destinataire: userId });
+    console.log("Total des avis trouvés:", total);
 
     // Récupérer les avis
     const avis = await Avis.find({ destinataire: userId })
@@ -160,17 +213,40 @@ exports.getAvisUtilisateur = async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
+    
+    console.log("Nombre d'avis récupérés:", avis.length);
+
+    // Transformer les données pour garantir la structure
+    const avisFormattes = avis.map(a => ({
+      _id: a._id,
+      note: a.note,
+      commentaire: a.commentaire,
+      createdAt: a.createdAt,
+      updatedAt: a.updatedAt,
+      auteur: a.auteur ? {
+        _id: a.auteur._id,
+        nom: a.auteur.nom || '',
+        prenom: a.auteur.prenom || '',
+        photo: a.auteur.photo || null
+      } : null,
+      annonce: a.annonce ? {
+        _id: a.annonce._id,
+        titre: a.annonce.titre || '',
+        villeDepart: a.annonce.villeDepart || '',
+        villeArrivee: a.annonce.villeArrivee || ''
+      } : null
+    }));
 
     res.json({
       success: true,
-      count: avis.length,
+      count: avisFormattes.length,
       total,
       pages: Math.ceil(total / limit),
       currentPage: parseInt(page),
-      data: avis
+      data: avisFormattes
     });
   } catch (err) {
-    console.error('Erreur lors de la récupération des avis:', err);
+    console.error('Erreur détaillée lors de la récupération des avis:', err);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération des avis',
@@ -185,12 +261,25 @@ exports.getAvisUtilisateur = async (req, res) => {
 exports.getAvisDonnes = async (req, res) => {
   try {
     const { limit = 10, page = 1 } = req.query;
+    
+    console.log("getAvisDonnes - Utilisateur:", req.user.id);
+    console.log("Paramètres:", { limit, page });
+    
+    // Vérifier que l'ID utilisateur est valide
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'Utilisateur non authentifié'
+      });
+    }
 
     // Pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
+    console.log("Pagination:", { skip, limit: parseInt(limit) });
 
     // Compter le total pour la pagination
     const total = await Avis.countDocuments({ auteur: req.user.id });
+    console.log("Total des avis donnés:", total);
 
     // Récupérer les avis donnés par l'utilisateur
     const avis = await Avis.find({ auteur: req.user.id })
@@ -199,17 +288,45 @@ exports.getAvisDonnes = async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
+    
+    console.log("Nombre d'avis récupérés:", avis.length);
+    
+    // Transformer les données pour garantir la structure
+    const avisFormattes = avis.map(a => ({
+      _id: a._id,
+      note: a.note,
+      commentaire: a.commentaire,
+      createdAt: a.createdAt,
+      updatedAt: a.updatedAt,
+      destinataire: a.destinataire ? {
+        _id: a.destinataire._id,
+        nom: a.destinataire.nom || '',
+        prenom: a.destinataire.prenom || '',
+        photo: a.destinataire.photo || null,
+        notation: a.destinataire.notation || { moyenne: 0, nombreAvis: 0 }
+      } : null,
+      annonce: a.annonce ? {
+        _id: a.annonce._id,
+        titre: a.annonce.titre || '',
+        villeDepart: a.annonce.villeDepart || '',
+        villeArrivee: a.annonce.villeArrivee || ''
+      } : null
+    }));
 
-    res.json({
+    const response = {
       success: true,
-      count: avis.length,
+      count: avisFormattes.length,
       total,
       pages: Math.ceil(total / limit),
       currentPage: parseInt(page),
-      data: avis
-    });
+      data: avisFormattes
+    };
+    
+    console.log("Réponse préparée avec", response.count, "avis");
+    
+    res.json(response);
   } catch (err) {
-    console.error('Erreur lors de la récupération des avis donnés:', err);
+    console.error('Erreur détaillée lors de la récupération des avis donnés:', err);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération des avis donnés',
@@ -224,12 +341,25 @@ exports.getAvisDonnes = async (req, res) => {
 exports.getAvisRecus = async (req, res) => {
   try {
     const { limit = 10, page = 1 } = req.query;
+    
+    console.log("getAvisRecus - Utilisateur:", req.user.id);
+    console.log("Paramètres:", { limit, page });
+    
+    // Vérifier que l'ID utilisateur est valide
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        success: false,
+        message: 'Utilisateur non authentifié'
+      });
+    }
 
     // Pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
+    console.log("Pagination:", { skip, limit: parseInt(limit) });
 
     // Compter le total pour la pagination
     const total = await Avis.countDocuments({ destinataire: req.user.id });
+    console.log("Total des avis reçus:", total);
 
     // Récupérer les avis reçus par l'utilisateur
     const avis = await Avis.find({ destinataire: req.user.id })
@@ -238,20 +368,92 @@ exports.getAvisRecus = async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
+    
+    console.log("Nombre d'avis récupérés:", avis.length);
+    
+    // Transformer les données pour garantir la structure
+    const avisFormattes = avis.map(a => ({
+      _id: a._id,
+      note: a.note,
+      commentaire: a.commentaire,
+      createdAt: a.createdAt,
+      updatedAt: a.updatedAt,
+      auteur: a.auteur ? {
+        _id: a.auteur._id,
+        nom: a.auteur.nom || '',
+        prenom: a.auteur.prenom || '',
+        photo: a.auteur.photo || null
+      } : null,
+      annonce: a.annonce ? {
+        _id: a.annonce._id,
+        titre: a.annonce.titre || '',
+        villeDepart: a.annonce.villeDepart || '',
+        villeArrivee: a.annonce.villeArrivee || ''
+      } : null
+    }));
 
-    res.json({
+    const response = {
       success: true,
-      count: avis.length,
+      count: avisFormattes.length,
       total,
       pages: Math.ceil(total / limit),
       currentPage: parseInt(page),
-      data: avis
-    });
+      data: avisFormattes
+    };
+    
+    console.log("Réponse préparée avec", response.count, "avis");
+    
+    res.json(response);
   } catch (err) {
-    console.error('Erreur lors de la récupération des avis reçus:', err);
+    console.error('Erreur détaillée lors de la récupération des avis reçus:', err);
     res.status(500).json({
       success: false,
       message: 'Erreur lors de la récupération des avis reçus',
+      error: err.message
+    });
+  }
+};
+
+// @desc    Vérifier si un avis existe déjà pour un transporteur et une annonce
+// @route   GET /api/avis/check/:destinataireId/:annonceId
+// @access  Privé
+exports.checkAvisExists = async (req, res) => {
+  try {
+    const { destinataireId, annonceId } = req.params;
+    
+    console.log("Vérification de l'existence d'un avis:", {
+      utilisateur: req.user.id,
+      destinataire: destinataireId,
+      annonce: annonceId
+    });
+
+    // Vérifier si les IDs sont valides
+    if (!mongoose.Types.ObjectId.isValid(destinataireId) || 
+        !mongoose.Types.ObjectId.isValid(annonceId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID invalide'
+      });
+    }
+
+    // Vérifier si un avis existe déjà
+    const avisExistant = await Avis.findOne({
+      auteur: req.user.id,
+      destinataire: destinataireId,
+      annonce: annonceId
+    });
+    
+    console.log("Résultat de la vérification:", !!avisExistant);
+
+    res.json({
+      success: true,
+      exists: !!avisExistant
+    });
+  } catch (err) {
+    console.error('Erreur lors de la vérification de l\'avis:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la vérification de l\'avis',
       error: err.message
     });
   }

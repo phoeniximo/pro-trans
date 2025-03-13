@@ -14,7 +14,8 @@ import {
   XMarkIcon,
   ShieldCheckIcon,
   ExclamationCircleIcon,
-  UserIcon
+  UserIcon,
+  StarIcon
 } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -34,6 +35,7 @@ const DevisDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [avisExiste, setAvisExiste] = useState(false);
 
   // Charger les détails du devis
   useEffect(() => {
@@ -42,6 +44,19 @@ const DevisDetailPage = () => {
         setLoading(true);
         const response = await apiClient.get(`/devis/${id}`);
         setDevis(response.data.data);
+        
+        // Vérifier si un avis existe déjà pour ce devis
+        if (user.role === 'client' && 
+            (response.data.data.statut === 'livre' || response.data.data.statut === 'termine')) {
+          try {
+            const avisResponse = await apiClient.get(`/avis/check/${response.data.data.transporteur._id}/${response.data.data.annonce._id}`);
+            setAvisExiste(avisResponse.data.exists);
+          } catch (err) {
+            console.error('Erreur lors de la vérification des avis:', err);
+            // On ne bloque pas le chargement de la page en cas d'erreur sur cette vérification
+          }
+        }
+        
         setError(null);
       } catch (err) {
         console.error('Erreur lors du chargement des détails du devis:', err);
@@ -53,7 +68,7 @@ const DevisDetailPage = () => {
     };
 
     fetchDevisDetails();
-  }, [id]);
+  }, [id, user.role]);
 
   // Gérer l'acceptation du devis (pour les clients)
   const handleAcceptDevis = async () => {
@@ -182,6 +197,9 @@ const DevisDetailPage = () => {
   const canCancel = user.role === 'transporteur' && devis.statut === 'en_attente';
   const canUpdateStatus = user.role === 'transporteur' && devis.statut === 'accepte';
   const needsPayment = user.role === 'client' && devis.statut === 'accepte' && !devis.paiement;
+  const canLeaveReview = user.role === 'client' && 
+                         (devis.statut === 'livre' || devis.statut === 'termine') && 
+                         !avisExiste;
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -222,7 +240,7 @@ const DevisDetailPage = () => {
                     <CurrencyEuroIcon className="h-5 w-5 text-gray-400 mr-1.5" />
                     Montant
                   </dt>
-                  <dd className="mt-1 text-lg font-bold text-gray-900">{devis.montant.toFixed(2)} €</dd>
+                  <dd className="mt-1 text-lg font-bold text-gray-900">{devis.montant.toFixed(2)} MAD</dd>
                 </div>
                 
                 <div className="sm:col-span-1">
@@ -265,7 +283,7 @@ const DevisDetailPage = () => {
               </dl>
               
               {/* Actions */}
-              {(canAccept || canRefuse || canCancel || canUpdateStatus || needsPayment) && (
+              {(canAccept || canRefuse || canCancel || canUpdateStatus || needsPayment || canLeaveReview) && (
                 <div className="mt-6 border-t border-gray-200 pt-6">
                   <h3 className="text-lg font-medium text-gray-900 mb-4">Actions</h3>
                   
@@ -334,6 +352,17 @@ const DevisDetailPage = () => {
                         Effectuer le paiement
                       </Button>
                     )}
+                    
+                    {canLeaveReview && (
+                      <Button
+                        variant="primary"
+                        to={`/dashboard/avis/create/${devis.transporteur._id}/${devis.annonce._id}`}
+                        className="w-full sm:w-auto"
+                      >
+                        <StarIcon className="h-5 w-5 mr-2" />
+                        Donner un avis au transporteur
+                      </Button>
+                    )}
                   </div>
                 </div>
               )}
@@ -371,7 +400,7 @@ const DevisDetailPage = () => {
                     
                     <div className="sm:col-span-1">
                       <dt className="text-sm font-medium text-gray-500">Montant</dt>
-                      <dd className="mt-1 text-sm text-gray-900">{devis.paiement.montant.toFixed(2)} €</dd>
+                      <dd className="mt-1 text-sm text-gray-900">{devis.paiement.montant.toFixed(2)} MAD</dd>
                     </div>
                     
                     <div className="sm:col-span-1">
@@ -479,6 +508,7 @@ const DevisDetailPage = () => {
                 <div className="space-y-4">
                   <div>
                     <h3 className="text-base font-medium text-gray-900">{devis.annonce.titre}</h3>
+                    
                     <div className="mt-2 flex items-center text-sm text-gray-500">
                       <MapPinIcon className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" />
                       <p>{devis.annonce.villeDepart} → {devis.annonce.villeArrivee}</p>
@@ -552,7 +582,7 @@ const DevisDetailPage = () => {
               <div>
                 <h3 className="text-sm font-medium text-blue-800">Protection acheteur</h3>
                 <p className="mt-1 text-sm text-blue-700">
-                  Tous les transports effectués via Pro-Trans sont assurés. Votre paiement est sécurisé et n'est versé au transporteur qu'une fois la livraison confirmée.
+                  Tous les transports effectués via Pro-Trans Maroc sont assurés. Votre paiement est sécurisé et n'est versé au transporteur qu'une fois la livraison confirmée.
                 </p>
               </div>
             </div>
@@ -570,7 +600,7 @@ const DevisDetailPage = () => {
                 </li>
                 <li className="flex items-start">
                   <span className="flex-shrink-0 h-5 w-5 text-green-500">✓</span>
-                  <span className="ml-2">Assurance de base incluse (jusqu'à 1000€)</span>
+                  <span className="ml-2">Assurance de base incluse (jusqu'à 10000 MAD)</span>
                 </li>
                 <li className="flex items-start">
                   <span className="flex-shrink-0 h-5 w-5 text-green-500">✓</span>
@@ -582,7 +612,7 @@ const DevisDetailPage = () => {
           
           <div className="mt-6 text-sm text-gray-500">
             <p>
-              Pour toute question ou besoin d'assistance, n'hésitez pas à contacter notre service client au 01 23 45 67 89 ou à support@pro-trans.fr.
+              Pour toute question ou besoin d'assistance, n'hésitez pas à contacter notre service client au 05 12 34 56 78 ou à support@pro-trans.ma.
             </p>
           </div>
         </div>
