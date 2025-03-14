@@ -197,7 +197,7 @@ const DashboardAdmin = () => {
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">Transactions</dt>
                   <dd>
-                    <div className="text-lg font-medium text-gray-900">{stats.transactions.montantTotal} €</div>
+                    <div className="text-lg font-medium text-gray-900">{stats.transactions.montantTotal} DH</div>
                   </dd>
                 </dl>
               </div>
@@ -343,7 +343,7 @@ const DashboardAdmin = () => {
                     type="monotone"
                     dataKey="montant"
                     stroke="#8884d8"
-                    name="Montant (€)"
+                    name="Montant (DH)"
                     activeDot={{ r: 8 }}
                   />
                   <Line

@@ -167,7 +167,7 @@ const DevisForm = ({ annonceId, initialValues = null, mode = 'create', onSuccess
                 <>
                   <span className="px-2">•</span>
                   <CurrencyEuroIcon className="h-4 w-4 text-gray-400 mr-1" />
-                  <span>Budget: {annonce.budget} €</span>
+                  <span>Budget: {annonce.budget} DH</span>
                 </>
               )}
               
@@ -195,7 +195,7 @@ const DevisForm = ({ annonceId, initialValues = null, mode = 'create', onSuccess
             id="montant"
             name="montant"
             type="number"
-            label="Montant proposé (€)"
+            label="Montant proposé (DH)"
             placeholder="Ex: 150"
             value={formik.values.montant}
             onChange={formik.handleChange}

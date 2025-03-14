@@ -3,6 +3,7 @@ const Devis = require('../models/Devis');
 const Annonce = require('../models/Annonce');
 const User = require('../models/User');
 const mongoose = require('mongoose');
+const NotificationService = require('../services/notificationService');
 
 // @desc    Créer un nouveau devis (transporteur)
 // @route   POST /api/devis
@@ -20,7 +21,8 @@ exports.createDevis = async (req, res) => {
     }
     
     // Vérifier si l'annonce existe et est disponible
-    const annonce = await Annonce.findById(annonceId);
+    const annonce = await Annonce.findById(annonceId)
+      .populate('utilisateur', 'nom prenom email');
     
     if (!annonce) {
       return res.status(404).json({
@@ -105,6 +107,18 @@ exports.createDevis = async (req, res) => {
     const devisComplet = await Devis.findById(nouveauDevis._id)
       .populate('transporteur', 'nom prenom email photo notation vehicules')
       .populate('annonce', 'titre villeDepart villeArrivee typeTransport dateDepart');
+    
+    // Envoyer une notification au client
+    try {
+      await NotificationService.createDevisNotification(
+        annonce.utilisateur._id, 
+        'Nouveau devis reçu',
+        `Vous avez reçu un nouveau devis de ${req.user.prenom} ${req.user.nom} pour votre annonce "${annonce.titre}"`,
+        nouveauDevis._id
+      );
+    } catch (notifError) {
+      console.error('Erreur lors de l\'envoi de la notification de nouveau devis:', notifError);
+    }
     
     res.status(201).json({
       success: true,
@@ -377,7 +391,8 @@ exports.accepterDevis = async (req, res) => {
     
     // Récupérer le devis avec les informations de l'annonce
     const devis = await Devis.findById(devisId)
-      .populate('annonce');
+      .populate('annonce')
+      .populate('transporteur', 'nom prenom email');
     
     if (!devis) {
       return res.status(404).json({
@@ -418,6 +433,44 @@ exports.accepterDevis = async (req, res) => {
       .populate('transporteur', 'nom prenom email photo notation')
       .populate('annonce', 'titre villeDepart villeArrivee statut');
     
+    // Envoyer une notification au transporteur
+    try {
+      await NotificationService.create(
+        devis.transporteur._id,
+        'Devis accepté',
+        `Votre devis pour l'annonce "${devis.annonce.titre}" a été accepté par le client. Vous pouvez maintenant planifier le transport.`,
+        'devis_accepte',
+        devisId,
+        'Devis'
+      );
+    } catch (notifError) {
+      console.error('Erreur lors de l\'envoi de la notification d\'acceptation de devis:', notifError);
+    }
+    
+    // Notifier les autres transporteurs dont les devis ont été automatiquement refusés
+    try {
+      const devisRefuses = await Devis.find({
+        annonce: devis.annonce._id,
+        _id: { $ne: devisId },
+        statut: 'refuse'
+      }).populate('transporteur');
+      
+      if (devisRefuses && devisRefuses.length > 0) {
+        const transporteurIds = [...new Set(devisRefuses.map(d => d.transporteur._id.toString()))];
+        
+        await NotificationService.notifyMany(
+          transporteurIds,
+          'Devis refusé',
+          `Votre devis pour l'annonce "${devis.annonce.titre}" a été refusé car le client a choisi un autre transporteur.`,
+          'devis_refuse',
+          devis.annonce._id,
+          'Annonce'
+        );
+      }
+    } catch (notifError) {
+      console.error('Erreur lors de l\'envoi des notifications de refus de devis:', notifError);
+    }
+    
     res.json({
       success: true,
       message: 'Devis accepté avec succès',
@@ -451,7 +504,8 @@ exports.refuserDevis = async (req, res) => {
     
     // Récupérer le devis avec les informations de l'annonce
     const devis = await Devis.findById(devisId)
-      .populate('annonce');
+      .populate('annonce')
+      .populate('transporteur', 'nom prenom email');
     
     if (!devis) {
       return res.status(404).json({
@@ -484,6 +538,20 @@ exports.refuserDevis = async (req, res) => {
     // Refuser le devis
     await devis.refuser();
     
+    // Envoyer une notification au transporteur
+    try {
+      await NotificationService.create(
+        devis.transporteur._id,
+        'Devis refusé',
+        `Votre devis pour l'annonce "${devis.annonce.titre}" a été refusé par le client${raison ? `. Raison: ${raison}` : '.'}`,
+        'devis_refuse',
+        devisId,
+        'Devis'
+      );
+    } catch (notifError) {
+      console.error('Erreur lors de l\'envoi de la notification de refus de devis:', notifError);
+    }
+    
     res.json({
       success: true,
       message: 'Devis refusé avec succès'
@@ -515,7 +583,8 @@ exports.annulerDevis = async (req, res) => {
     }
     
     // Récupérer le devis
-    const devis = await Devis.findById(devisId);
+    const devis = await Devis.findById(devisId)
+      .populate('annonce', 'titre utilisateur');
     
     if (!devis) {
       return res.status(404).json({
@@ -542,7 +611,7 @@ exports.annulerDevis = async (req, res) => {
     
     // Si le devis était accepté, il faut remettre l'annonce en disponible
     if (devis.statut === 'accepte') {
-      await Annonce.findByIdAndUpdate(devis.annonce, {
+      await Annonce.findByIdAndUpdate(devis.annonce._id, {
         statut: 'disponible',
         devisAccepte: null
       });
@@ -556,6 +625,20 @@ exports.annulerDevis = async (req, res) => {
     }
     
     await devis.save();
+    
+    // Envoyer une notification au client
+    try {
+      await NotificationService.create(
+        devis.annonce.utilisateur,
+        'Devis annulé par le transporteur',
+        `Le devis pour votre annonce "${devis.annonce.titre}" a été annulé par le transporteur${raison ? `. Raison: ${raison}` : '.'}`,
+        'devis_annule',
+        devisId,
+        'Devis'
+      );
+    } catch (notifError) {
+      console.error('Erreur lors de l\'envoi de la notification d\'annulation de devis:', notifError);
+    }
     
     res.json({
       success: true,
@@ -626,7 +709,8 @@ exports.updateStatutTransport = async (req, res) => {
     devis.statut = statut === 'termine' ? 'termine' : 'en_cours';
     
     // Récupérer et mettre à jour l'annonce
-    const annonce = await Annonce.findById(devis.annonce);
+    const annonce = await Annonce.findById(devis.annonce)
+      .populate('utilisateur', 'nom prenom email');
     
     if (!annonce) {
       return res.status(404).json({
@@ -687,6 +771,27 @@ exports.updateStatutTransport = async (req, res) => {
     // Sauvegarder les modifications
     await Promise.all([devis.save(), annonce.save()]);
     
+    // Envoyer une notification au client
+    try {
+      const statusMessages = {
+        en_cours: 'Le transporteur a commencé la prise en charge de votre transport',
+        en_transit: 'Votre colis est en transit',
+        en_livraison: 'Votre colis est en cours de livraison',
+        livre: 'Votre colis a été livré',
+        termine: 'Le transport est terminé',
+        probleme: 'Un problème est survenu avec votre transport'
+      };
+      
+      await NotificationService.createAnnonceStatusNotification(
+        annonce.utilisateur._id,
+        `Mise à jour du statut: ${statut}`,
+        `${statusMessages[statut]}${commentaire ? `. Commentaire: ${commentaire}` : ''}`,
+        annonce._id
+      );
+    } catch (notifError) {
+      console.error('Erreur lors de l\'envoi de la notification de mise à jour de statut:', notifError);
+    }
+    
     res.json({
       success: true,
       message: `Statut mis à jour: ${statut}`,
@@ -725,7 +830,8 @@ exports.updateDevis = async (req, res) => {
     }
     
     // Récupérer le devis
-    const devis = await Devis.findById(devisId);
+    const devis = await Devis.findById(devisId)
+      .populate('annonce', 'titre utilisateur');
     
     if (!devis) {
       return res.status(404).json({
@@ -785,6 +891,20 @@ exports.updateDevis = async (req, res) => {
     const devisComplet = await Devis.findById(devisMisAJour._id)
       .populate('transporteur', 'nom prenom email photo notation vehicules')
       .populate('annonce', 'titre villeDepart villeArrivee typeTransport dateDepart');
+
+    // Envoyer une notification au client
+    try {
+      await NotificationService.create(
+        devis.annonce.utilisateur,
+        'Devis mis à jour',
+        `Le devis pour votre annonce "${devis.annonce.titre}" a été mis à jour par le transporteur. Veuillez consulter les nouvelles conditions.`,
+        'devis_modifie',
+        devisId,
+        'Devis'
+      );
+    } catch (notifError) {
+      console.error('Erreur lors de l\'envoi de la notification de mise à jour de devis:', notifError);
+    }
     
     res.json({
       success: true,

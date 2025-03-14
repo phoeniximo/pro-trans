@@ -4,6 +4,7 @@ const User = require('../models/User');
 const Annonce = require('../models/Annonce');
 const Devis = require('../models/Devis'); // Ajout pour vérifier le statut du devis
 const mongoose = require('mongoose');
+const NotificationService = require('../services/notificationService');
 
 // @desc    Créer un nouvel avis
 // @route   POST /api/avis
@@ -143,6 +144,19 @@ exports.createAvis = async (req, res) => {
       .populate('auteur', 'nom prenom photo')
       .populate('destinataire', 'nom prenom photo notation')
       .populate('annonce', 'titre villeDepart villeArrivee');
+
+    // Envoyer une notification au destinataire de l'avis
+    try {
+      const auteur = await User.findById(req.user.id);
+      await NotificationService.createAvisNotification(
+        destinataireId,
+        'Nouvel avis reçu',
+        `${auteur.prenom} ${auteur.nom} vous a donné un avis de ${note}/5 pour l'annonce "${annonce.titre}"`,
+        nouvelAvis._id
+      );
+    } catch (notifError) {
+      console.error('Erreur lors de l\'envoi de la notification d\'avis:', notifError);
+    }
 
     res.status(201).json({
       success: true,

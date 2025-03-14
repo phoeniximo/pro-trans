@@ -4,6 +4,8 @@ const Devis = require('../models/Devis');
 const mongoose = require('mongoose');
 const path = require('path');
 const fs = require('fs');
+const NotificationService = require('../services/notificationService');
+const User = require('../models/User');
 
 // @desc    Récupérer toutes les annonces
 // @route   GET /api/annonces
@@ -84,6 +86,31 @@ exports.creerAnnonce = async (req, res) => {
     // Récupérer l'annonce avec les infos de l'utilisateur
     const annonceComplete = await Annonce.findById(nouvelleAnnonce._id)
       .populate('utilisateur', 'nom prenom email photo');
+
+    // Notifier les transporteurs potentiels qui correspondent aux critères
+    try {
+      // Trouver des transporteurs qui pourraient être intéressés par cette annonce
+      // Par exemple, ceux qui sont dans la même ville ou région
+      const transporteursInteresses = await User.find({
+        role: 'transporteur',
+        actif: true,
+        'adresse.ville': { $regex: new RegExp(annonce.villeDepart, 'i') }
+      }).select('_id');
+
+      if (transporteursInteresses && transporteursInteresses.length > 0) {
+        await NotificationService.notifyMany(
+          transporteursInteresses.map(t => t._id),
+          'Nouvelle annonce disponible',
+          `Nouvelle opportunité de transport de ${annonce.villeDepart} à ${annonce.villeArrivee}`,
+          'annonce',
+          nouvelleAnnonce._id,
+          'Annonce'
+        );
+      }
+    } catch (notifError) {
+      console.error('Erreur lors de l\'envoi des notifications:', notifError);
+      // On continue l'exécution même si les notifications échouent
+    }
 
     res.status(201).json({
       success: true,
@@ -208,6 +235,24 @@ exports.modifierAnnonce = async (req, res) => {
       { new: true, runValidators: true }
     ).populate('utilisateur', 'nom prenom email photo');
 
+    // Notifier les transporteurs qui ont déjà proposé un devis sur cette annonce
+    try {
+      const devisExistants = await Devis.find({ annonce: id, statut: 'en_attente' });
+      if (devisExistants && devisExistants.length > 0) {
+        const transporteurIds = [...new Set(devisExistants.map(d => d.transporteur.toString()))];
+        await NotificationService.notifyMany(
+          transporteurIds,
+          'Modification d\'annonce',
+          `L'annonce "${annonceModifiee.titre}" a été modifiée. Veuillez vérifier les nouveaux détails.`,
+          'modification_annonce',
+          annonceModifiee._id,
+          'Annonce'
+        );
+      }
+    } catch (notifError) {
+      console.error('Erreur lors de l\'envoi des notifications de modification:', notifError);
+    }
+
     res.json({
       success: true,
       message: 'Annonce modifiée avec succès',
@@ -273,6 +318,24 @@ exports.supprimerAnnonce = async (req, res) => {
         success: false,
         message: 'Impossible de supprimer une annonce déjà en cours ou terminée'
       });
+    }
+
+    // Notifier les transporteurs qui ont déjà proposé un devis sur cette annonce
+    try {
+      const devisExistants = await Devis.find({ annonce: id, statut: 'en_attente' });
+      if (devisExistants && devisExistants.length > 0) {
+        const transporteurIds = [...new Set(devisExistants.map(d => d.transporteur.toString()))];
+        await NotificationService.notifyMany(
+          transporteurIds,
+          'Annonce supprimée',
+          `L'annonce "${annonce.titre}" a été supprimée par le client.`,
+          'suppression_annonce',
+          null,
+          'Annonce'
+        );
+      }
+    } catch (notifError) {
+      console.error('Erreur lors de l\'envoi des notifications de suppression:', notifError);
     }
 
     // Supprimer aussi tous les devis associés
@@ -419,6 +482,24 @@ exports.uploadPhotos = async (req, res) => {
     // Mettre à jour l'annonce avec les chemins des photos
     annonce.photos = [...(annonce.photos || []), ...uploadedFiles];
     await annonce.save();
+
+    // Notifier les transporteurs qui ont proposé un devis qu'il y a de nouvelles photos
+    try {
+      const devisExistants = await Devis.find({ annonce: id, statut: 'en_attente' });
+      if (devisExistants && devisExistants.length > 0) {
+        const transporteurIds = [...new Set(devisExistants.map(d => d.transporteur.toString()))];
+        await NotificationService.notifyMany(
+          transporteurIds,
+          'Nouvelles photos ajoutées',
+          `De nouvelles photos ont été ajoutées à l'annonce "${annonce.titre}".`,
+          'ajout_photos',
+          annonce._id,
+          'Annonce'
+        );
+      }
+    } catch (notifError) {
+      console.error('Erreur lors de l\'envoi des notifications d\'ajout de photos:', notifError);
+    }
 
     res.json({
       success: true,

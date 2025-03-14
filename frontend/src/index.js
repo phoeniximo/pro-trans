@@ -6,6 +6,7 @@ import { Toaster } from 'react-hot-toast';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { MessageProvider } from './context/MessageContext';
+import { NotificationProvider } from './context/NotificationContext';
 import './styles/index.css';
 
 // Configuration de React Query pour la gestion des données
@@ -19,7 +20,7 @@ const queryClient = new QueryClient({
   },
 });
 
-// Ajouter ce code dans index.js ou au début de votre application
+// Ajouter ce code au début de l'application pour supprimer les erreurs ResizeObserver
 const originalError = window.console.error;
 window.console.error = (...args) => {
   if (args[0] && args[0].includes && args[0].includes('ResizeObserver')) {
@@ -27,6 +28,7 @@ window.console.error = (...args) => {
   }
   originalError(...args);
 };
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
@@ -34,17 +36,19 @@ root.render(
       <BrowserRouter>
         <AuthProvider>
           <MessageProvider>
-            <App />
-            <Toaster 
-              position="top-right"
-              toastOptions={{
-                duration: 5000,
-                style: {
-                  background: '#363636',
-                  color: '#fff',
-                },
-              }}
-            />
+            <NotificationProvider>
+              <App />
+              <Toaster 
+                position="top-right"
+                toastOptions={{
+                  duration: 5000,
+                  style: {
+                    background: '#363636',
+                    color: '#fff',
+                  },
+                }}
+              />
+            </NotificationProvider>
           </MessageProvider>
         </AuthProvider>
       </BrowserRouter>

@@ -29,18 +29,18 @@ const CreateDevisPage = () => {
   const validationSchema = Yup.object({
     montant: Yup.number()
       .required('Le montant est obligatoire')
-      .positive('Le montant doit être positif')
-      .typeError('Le montant doit être un nombre'),
+      .positive('Le montant doit Ãªtre positif')
+      .typeError('Le montant doit Ãªtre un nombre'),
     delaiLivraison: Yup.date()
       .required('La date de livraison est obligatoire')
-      .min(new Date(), 'La date de livraison doit être dans le futur')
+      .min(new Date(), 'La date de livraison doit Ãªtre dans le futur')
       .typeError('Veuillez entrer une date valide'),
     message: Yup.string()
       .required('Un message est obligatoire')
-      .min(20, 'Le message doit comporter au moins 20 caractères')
-      .max(1000, 'Le message ne doit pas dépasser 1000 caractères'),
+      .min(20, 'Le message doit comporter au moins 20 caractÃ¨res')
+      .max(1000, 'Le message ne doit pas dÃ©passer 1000 caractÃ¨res'),
     conditions: Yup.boolean()
-      .oneOf([true], 'Vous devez accepter les conditions générales')
+      .oneOf([true], 'Vous devez accepter les conditions gÃ©nÃ©rales')
   });
 
   // Initialisation du formulaire avec Formik
@@ -56,7 +56,7 @@ const CreateDevisPage = () => {
       try {
         setLoading(true);
         
-        // Construction de l'objet devis à envoyer
+        // Construction de l'objet devis Ã  envoyer
         const devisData = {
           annonceId,
           montant: parseFloat(values.montant),
@@ -64,23 +64,23 @@ const CreateDevisPage = () => {
           message: values.message
         };
         
-        // Appel à l'API pour créer le devis
+        // Appel Ã  l'API pour crÃ©er le devis
         const response = await devisService.createDevis(devisData);
         
-        toast.success('Devis envoyé avec succès');
+        toast.success('Devis envoyÃ© avec succÃ¨s');
         
-        // Redirection vers la page du devis créé
+        // Redirection vers la page du devis crÃ©Ã©
         navigate(`/dashboard/devis/${response.data._id}`);
       } catch (error) {
-        console.error('Erreur lors de la création du devis:', error);
-        toast.error(error.message || 'Erreur lors de la création du devis');
+        console.error('Erreur lors de la crÃ©ation du devis:', error);
+        toast.error(error.message || 'Erreur lors de la crÃ©ation du devis');
       } finally {
         setLoading(false);
       }
     }
   });
 
-  // Récupération des détails de l'annonce
+  // RÃ©cupÃ©ration des dÃ©tails de l'annonce
   useEffect(() => {
     const fetchAnnonce = async () => {
       try {
@@ -89,14 +89,14 @@ const CreateDevisPage = () => {
         setAnnonce(response.data.data);
         setAnnonceError(null);
         
-        // Préremplir la date de livraison si disponible dans l'annonce
+        // PrÃ©remplir la date de livraison si disponible dans l'annonce
         if (response.data.data.dateArrivee) {
           formik.setFieldValue('delaiLivraison', new Date(response.data.data.dateArrivee));
         }
       } catch (err) {
         console.error('Erreur lors du chargement de l\'annonce:', err);
-        setAnnonceError('Impossible de charger les détails de l\'annonce');
-        toast.error('Erreur lors du chargement des détails de l\'annonce');
+        setAnnonceError('Impossible de charger les dÃ©tails de l\'annonce');
+        toast.error('Erreur lors du chargement des dÃ©tails de l\'annonce');
       } finally {
         setAnnonceLoading(false);
       }
@@ -133,7 +133,7 @@ const CreateDevisPage = () => {
             />
           </svg>
           <h2 className="text-lg font-medium mt-2">
-            {annonceError || "Cette annonce n'existe pas ou a été supprimée."}
+            {annonceError || "Cette annonce n'existe pas ou a Ã©tÃ© supprimÃ©e."}
           </h2>
         </div>
         <div className="text-center">
@@ -153,7 +153,7 @@ const CreateDevisPage = () => {
       <div className="md:flex md:items-center md:justify-between mb-6">
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-            Créer un devis
+            CrÃ©er un devis
           </h1>
           <p className="mt-1 text-sm text-gray-500">
             Proposez votre offre pour cette demande de transport
@@ -164,7 +164,7 @@ const CreateDevisPage = () => {
             to={`/annonces/${annonceId}`}
             variant="outline"
           >
-            Retour à l'annonce
+            Retour Ã  l'annonce
           </Button>
         </div>
       </div>
@@ -174,7 +174,7 @@ const CreateDevisPage = () => {
         <div className="md:col-span-1">
           <div className="bg-white shadow overflow-hidden rounded-lg">
             <div className="px-4 py-5 sm:px-6">
-              <h2 className="text-lg font-medium text-gray-900">Détails de l'annonce</h2>
+              <h2 className="text-lg font-medium text-gray-900">DÃ©tails de l'annonce</h2>
               <p className="mt-1 text-sm text-gray-500">
                 Informations sur la demande de transport
               </p>
@@ -187,7 +187,7 @@ const CreateDevisPage = () => {
                     Type
                   </dt>
                   <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2 capitalize">
-                    {annonce.typeTransport || 'Non spécifié'}
+                    {annonce.typeTransport || 'Non spÃ©cifiÃ©'}
                   </dd>
                 </div>
                 <div className="py-3 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
@@ -210,7 +210,7 @@ const CreateDevisPage = () => {
                 <div className="py-3 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                   <dt className="text-sm font-medium text-gray-500 flex items-center">
                     <CalendarIcon className="mr-1 h-5 w-5 text-gray-400" />
-                    Date de départ
+                    Date de dÃ©part
                   </dt>
                   <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                     {formatDate(annonce.dateDepart)}
@@ -237,7 +237,7 @@ const CreateDevisPage = () => {
                   <div className="py-3 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt className="text-sm font-medium text-gray-500">Volume</dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                      {annonce.volume} m³
+                      {annonce.volume} mÂ³
                     </dd>
                   </div>
                 )}
@@ -267,7 +267,7 @@ const CreateDevisPage = () => {
                       name="montant"
                       type="number"
                       step="0.01"
-                      label="Montant proposé (€)"
+                      label="Montant proposÃ© (DH)"
                       placeholder="Ex: 250.00"
                       value={formik.values.montant}
                       onChange={formik.handleChange}
@@ -285,7 +285,7 @@ const CreateDevisPage = () => {
                       id="delaiLivraison"
                       name="delaiLivraison"
                       type="date"
-                      label="Date de livraison prévue"
+                      label="Date de livraison prÃ©vue"
                       value={formik.values.delaiLivraison ? new Date(formik.values.delaiLivraison).toISOString().split('T')[0] : ''}
                       onChange={formik.handleChange}
                       onBlur={formik.handleBlur}
@@ -308,21 +308,21 @@ const CreateDevisPage = () => {
                         name="message"
                         rows={6}
                         className="shadow-sm focus:ring-teal-500 focus:border-teal-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                        placeholder="Décrivez votre offre, vos conditions, votre expérience..."
+                        placeholder="DÃ©crivez votre offre, vos conditions, votre expÃ©rience..."
                         value={formik.values.message}
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
                       />
                     </div>
                     <p className="mt-2 text-sm text-gray-500">
-                      Soyez précis et professionnel pour augmenter vos chances d'être sélectionné.
+                      Soyez prÃ©cis et professionnel pour augmenter vos chances d'Ãªtre sÃ©lectionnÃ©.
                     </p>
                     {formik.touched.message && formik.errors.message && (
                       <p className="mt-2 text-sm text-red-600">{formik.errors.message}</p>
                     )}
                   </div>
 
-                  {/* Conditions générales */}
+                  {/* Conditions gÃ©nÃ©rales */}
                   <div className="relative flex items-start">
                     <div className="flex items-center h-5">
                       <input
@@ -336,10 +336,10 @@ const CreateDevisPage = () => {
                     </div>
                     <div className="ml-3 text-sm">
                       <label htmlFor="conditions" className="font-medium text-gray-700">
-                        J'accepte les conditions générales
+                        J'accepte les conditions gÃ©nÃ©rales
                       </label>
                       <p className="text-gray-500">
-                        En soumettant ce devis, je m'engage à respecter les termes et délais proposés.
+                        En soumettant ce devis, je m'engage Ã  respecter les termes et dÃ©lais proposÃ©s.
                       </p>
                       {formik.touched.conditions && formik.errors.conditions && (
                         <p className="mt-2 text-sm text-red-600">{formik.errors.conditions}</p>
@@ -376,10 +376,10 @@ const CreateDevisPage = () => {
           <div className="mt-6 bg-blue-50 rounded-lg border border-blue-100 p-4">
             <h3 className="text-lg font-medium text-blue-800">Conseils pour un bon devis</h3>
             <ul className="mt-2 list-disc pl-5 text-sm text-blue-700 space-y-1">
-              <li>Soyez transparent sur les coûts et les services inclus</li>
-              <li>Précisez les délais de livraison réalistes</li>
-              <li>Mettez en avant votre expérience et vos qualifications</li>
-              <li>Détaillez les mesures de sécurité que vous prendrez pour protéger les biens</li>
+              <li>Soyez transparent sur les coÃ»ts et les services inclus</li>
+              <li>PrÃ©cisez les dÃ©lais de livraison rÃ©alistes</li>
+              <li>Mettez en avant votre expÃ©rience et vos qualifications</li>
+              <li>DÃ©taillez les mesures de sÃ©curitÃ© que vous prendrez pour protÃ©ger les biens</li>
               <li>Proposez des options additionnelles si pertinent (emballage, assurance, etc.)</li>
             </ul>
           </div>

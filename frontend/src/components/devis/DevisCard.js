@@ -68,7 +68,7 @@ const DevisCard = ({ devis, isDashboard = false, userRole = 'client' }) => {
         {/* Prix */}
         <div className="flex justify-between items-center mb-4">
           <div className="text-2xl font-bold text-teal-600">
-            {devis.montant.toFixed(2)} €
+            {devis.montant.toFixed(2)} DH
           </div>
           <div className="flex items-center text-sm text-gray-500">
             <ClockIcon className="h-4 w-4 mr-1" />

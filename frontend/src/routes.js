@@ -21,6 +21,7 @@ import VerifyEmailPage from './pages/auth/VerifyEmailPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import ProfilePage from './pages/dashboard/ProfilePage';
 import EditProfilePage from './pages/dashboard/EditProfilePage';
+import NotificationsPage from './pages/dashboard/NotificationsPage';
 
 // Pages des annonces (protégées)
 import MesAnnoncesPage from './pages/dashboard/annonces/MesAnnoncesPage';
@@ -133,6 +134,12 @@ export const routes = {
     {
       path: '/profile/edit',
       element: <EditProfilePage />,
+      roles: ['client', 'transporteur', 'admin'],
+      exact: true,
+    },
+    {
+      path: '/dashboard/notifications',
+      element: <NotificationsPage />,
       roles: ['client', 'transporteur', 'admin'],
       exact: true,
     },

@@ -5,6 +5,7 @@ const User = require('../models/User');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 const { sendTrackingUpdateEmail } = require('../utils/emailService');
+const NotificationService = require('../services/notificationService');
 
 // Génération d'un code de suivi unique
 const generateTrackingCode = () => {
@@ -244,6 +245,28 @@ exports.createUpdateTracking = async (req, res) => {
     // Sauvegarder les modifications
     await annonce.save();
     
+    // Créer une notification pour le client
+    try {
+      const statusMessages = {
+        en_attente: 'Votre colis est en attente de prise en charge',
+        pris_en_charge: 'Votre colis a été pris en charge par le transporteur',
+        en_transit: 'Votre colis est en transit',
+        en_livraison: 'Votre colis est en cours de livraison',
+        livre: 'Votre colis a été livré',
+        probleme: 'Un problème est survenu avec votre colis'
+      };
+      
+      // Notifier le client
+      await NotificationService.createAnnonceStatusNotification(
+        annonce.utilisateur._id,
+        `Statut de suivi: ${statut}`,
+        `${statusMessages[statut] || 'Mise à jour du statut de votre colis'}${commentaire ? `. Commentaire: ${commentaire}` : ''}`,
+        annonceId
+      );
+    } catch (notifError) {
+      console.error('Erreur lors de l\'envoi de la notification de suivi:', notifError);
+    }
+    
     // Envoyer un email de notification au client
     try {
       await sendTrackingUpdateEmail(
@@ -356,6 +379,27 @@ exports.updateTrackingStatus = async (req, res) => {
     // Sauvegarder les modifications
     await annonce.save();
     
+    // Créer une notification pour le client
+    try {
+      const statusMessages = {
+        en_attente: 'Votre colis est en attente de prise en charge',
+        pris_en_charge: 'Votre colis a été pris en charge par le transporteur',
+        en_transit: 'Votre colis est en transit',
+        en_livraison: 'Votre colis est en cours de livraison',
+        livre: 'Votre colis a été livré',
+        probleme: 'Un problème est survenu avec votre colis'
+      };
+      
+      await NotificationService.createAnnonceStatusNotification(
+        annonce.utilisateur._id,
+        `Statut mis à jour: ${statut}`,
+        `${statusMessages[statut] || 'Mise à jour du statut de votre colis'}${commentaire ? `. Commentaire: ${commentaire}` : ''}`,
+        annonceId
+      );
+    } catch (notifError) {
+      console.error('Erreur lors de l\'envoi de la notification de mise à jour de statut:', notifError);
+    }
+    
     // Envoyer un email de notification au client
     try {
       await sendTrackingUpdateEmail(
@@ -414,6 +458,7 @@ exports.addTrackingEvent = async (req, res) => {
     
     // Récupérer l'annonce
     const annonce = await Annonce.findById(annonceId)
+      .populate('utilisateur', 'nom prenom email')
       .populate('devisAccepte');
     
     if (!annonce) {
@@ -461,6 +506,32 @@ exports.addTrackingEvent = async (req, res) => {
     
     // Sauvegarder les modifications
     await annonce.save();
+    
+    // Créer une notification pour le client
+    try {
+      await NotificationService.createAnnonceStatusNotification(
+        annonce.utilisateur._id,
+        'Mise à jour du suivi',
+        `Nouvelle information sur votre colis: ${commentaire}`,
+        annonceId
+      );
+    } catch (notifError) {
+      console.error('Erreur lors de l\'envoi de la notification d\'événement de suivi:', notifError);
+    }
+    
+    // Envoyer un email de notification au client (optionnel pour les événements mineurs)
+    try {
+      await sendTrackingUpdateEmail(
+        annonce.utilisateur.email,
+        annonce.utilisateur.prenom,
+        annonce.tracking.codeTracking,
+        annonce.titre,
+        annonce.tracking.statut,
+        commentaire
+      );
+    } catch (emailError) {
+      console.error('Erreur lors de l\'envoi de l\'email de suivi:', emailError);
+    }
     
     res.json({
       success: true,
@@ -709,6 +780,18 @@ exports.markAsDelivered = async (req, res) => {
     // Sauvegarder les modifications
     await annonce.save();
     
+    // Créer une notification pour le client
+    try {
+      await NotificationService.createAnnonceStatusNotification(
+        annonce.utilisateur._id,
+        'Colis livré',
+        `Votre colis a été livré à ${annonce.villeArrivee}. Le transporteur a obtenu une signature de ${signatureName || 'Non spécifié'}.`,
+        annonceId
+      );
+    } catch (notifError) {
+      console.error('Erreur lors de l\'envoi de la notification de livraison:', notifError);
+    }
+    
     // Envoyer un email de notification au client
     try {
       await sendTrackingUpdateEmail(
@@ -759,7 +842,7 @@ exports.confirmReception = async (req, res) => {
     
     // Récupérer l'annonce
     const annonce = await Annonce.findById(annonceId)
-      .populate('devisAccepte');
+      .populate('devisAccepte', 'transporteur');
     
     if (!annonce) {
       return res.status(404).json({
@@ -805,12 +888,28 @@ exports.confirmReception = async (req, res) => {
     // Sauvegarder les modifications
     await annonce.save();
     
-    // Si un transporteur est associé, le notifier
+    // Créer une notification pour le transporteur
+    try {
+      if (annonce.devisAccepte && annonce.devisAccepte.transporteur) {
+        await NotificationService.create(
+          annonce.devisAccepte.transporteur,
+          'Réception confirmée',
+          `Le client a confirmé la bonne réception de la livraison pour l'annonce "${annonce.titre}"`,
+          'reception_confirmee',
+          annonceId,
+          'Annonce'
+        );
+      }
+    } catch (notifError) {
+      console.error('Erreur lors de l\'envoi de la notification de confirmation de réception:', notifError);
+    }
+    
+    // Envoyer un email au transporteur (optionnel)
     if (annonce.devisAccepte && annonce.devisAccepte.transporteur) {
       const transporteur = await User.findById(annonce.devisAccepte.transporteur);
       
       if (transporteur && transporteur.email) {
-        // Envoyer un email au transporteur (à implémenter)
+        // Implémenter l'envoi d'email ici
       }
     }
     
@@ -928,16 +1027,52 @@ exports.reportIssue = async (req, res) => {
     // Sauvegarder les modifications
     await annonce.save();
     
+    // Créer des notifications
+    try {
+      // Déterminer le destinataire (l'autre partie)
+      const destinataireId = isClient ? 
+        annonce.devisAccepte.transporteur._id : 
+        annonce.utilisateur._id;
+      
+      const expediteur = await User.findById(req.user.id);
+      const role = isClient ? 'client' : 'transporteur';
+      
+      // Notifier l'autre partie
+      await NotificationService.create(
+        destinataireId,
+        'Problème signalé',
+        `Un problème a été signalé par le ${role} ${expediteur.prenom} ${expediteur.nom} pour l'annonce "${annonce.titre}". Type: ${type || 'Autre'}`,
+        'probleme_signale',
+        annonceId,
+        'Annonce'
+      );
+      
+      // Notifier les administrateurs
+      const admins = await User.find({ role: 'admin' }).select('_id');
+      if (admins && admins.length > 0) {
+        await NotificationService.notifyMany(
+          admins.map(admin => admin._id),
+          'Problème de livraison signalé',
+          `Un problème a été signalé par un ${role} pour l'annonce "${annonce.titre}". Type: ${type || 'Autre'}`,
+          'probleme_signale',
+          annonceId,
+          'Annonce'
+        );
+      }
+    } catch (notifError) {
+      console.error('Erreur lors de l\'envoi des notifications de problème:', notifError);
+    }
+    
     // Envoyer des notifications par email
     try {
       // Si c'est le client qui signale, notifier le transporteur
       if (isClient && annonce.devisAccepte && annonce.devisAccepte.transporteur) {
-        // Envoyer un email au transporteur (à implémenter)
+        // Implémenter l'envoi d'email au transporteur
       }
       
       // Si c'est le transporteur qui signale, notifier le client
       if (isTransporteur) {
-        // Envoyer un email au client (à implémenter)
+        // Implémenter l'envoi d'email au client
       }
       
       // Notifier l'administration (à implémenter)

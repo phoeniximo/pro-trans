@@ -391,7 +391,7 @@ const MesDevisPage = () => {
                       </div>
                       <div className="flex flex-col items-end space-y-1">
                         <span className="text-2xl font-bold text-gray-900">
-                          {devis.montant ? devis.montant.toFixed(2) : '0.00'} €
+                          {devis.montant ? devis.montant.toFixed(2) : '0.00'} DH
                         </span>
                         <span className={`px-2 py-1 inline-flex text-xs font-medium rounded-full ${STATUT_DEVIS_COLORS[devis.statut] || 'bg-gray-100 text-gray-800'}`}>
                           {STATUT_DEVIS_LABELS[devis.statut] || 'Statut inconnu'}

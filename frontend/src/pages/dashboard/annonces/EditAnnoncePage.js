@@ -32,41 +32,41 @@ const EditAnnoncePage = () => {
   const [existingImages, setExistingImages] = useState([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // Schéma de validation avec Yup
+  // SchÃ©ma de validation avec Yup
   const validationSchema = Yup.object({
     titre: Yup.string()
       .required('Le titre est obligatoire')
-      .min(5, 'Le titre doit comporter au moins 5 caractères')
-      .max(100, 'Le titre ne doit pas dépasser 100 caractères'),
+      .min(5, 'Le titre doit comporter au moins 5 caractÃ¨res')
+      .max(100, 'Le titre ne doit pas dÃ©passer 100 caractÃ¨res'),
     description: Yup.string()
       .required('La description est obligatoire')
-      .min(20, 'La description doit comporter au moins 20 caractères')
-      .max(1000, 'La description ne doit pas dépasser 1000 caractères'),
+      .min(20, 'La description doit comporter au moins 20 caractÃ¨res')
+      .max(1000, 'La description ne doit pas dÃ©passer 1000 caractÃ¨res'),
     typeTransport: Yup.string()
       .required('Le type de transport est obligatoire'),
     villeDepart: Yup.string()
-      .required('La ville de départ est obligatoire'),
+      .required('La ville de dÃ©part est obligatoire'),
     villeArrivee: Yup.string()
-      .required('La ville d\'arrivée est obligatoire'),
+      .required('La ville d\'arrivÃ©e est obligatoire'),
     dateDepart: Yup.date()
-      .required('La date de départ est obligatoire')
-      .min(new Date(), 'La date de départ doit être dans le futur'),
+      .required('La date de dÃ©part est obligatoire')
+      .min(new Date(), 'La date de dÃ©part doit Ãªtre dans le futur'),
     poids: Yup.number()
       .when('typeTransport', {
         is: (type) => ['colis', 'marchandise', 'palette'].includes(type),
-        then: () => Yup.number().required('Le poids est obligatoire').positive('Le poids doit être positif'),
+        then: () => Yup.number().required('Le poids est obligatoire').positive('Le poids doit Ãªtre positif'),
         otherwise: () => Yup.number().nullable()
       }),
     volume: Yup.number()
       .when('typeTransport', {
         is: (type) => ['meuble', 'demenagement'].includes(type),
-        then: () => Yup.number().required('Le volume est obligatoire').positive('Le volume doit être positif'),
+        then: () => Yup.number().required('Le volume est obligatoire').positive('Le volume doit Ãªtre positif'),
         otherwise: () => Yup.number().nullable()
       }),
     dimensions: Yup.string(),
     valeurDeclaree: Yup.number()
       .nullable()
-      .positive('La valeur déclarée doit être positive'),
+      .positive('La valeur dÃ©clarÃ©e doit Ãªtre positive'),
     isUrgent: Yup.boolean(),
     instructionsSpeciales: Yup.string()
   });
@@ -92,7 +92,7 @@ const EditAnnoncePage = () => {
       try {
         setLoading(true);
         
-        // Convertir les valeurs numériques
+        // Convertir les valeurs numÃ©riques
         const annonceData = {
           ...values,
           poids: values.poids ? parseFloat(values.poids) : undefined,
@@ -100,10 +100,10 @@ const EditAnnoncePage = () => {
           valeurDeclaree: values.valeurDeclaree ? parseFloat(values.valeurDeclaree) : undefined
         };
         
-        // Mettre à jour l'annonce
+        // Mettre Ã  jour l'annonce
         await annonceService.updateAnnonce(id, annonceData);
         
-        // Si des images ont été ajoutées, les télécharger
+        // Si des images ont Ã©tÃ© ajoutÃ©es, les tÃ©lÃ©charger
         if (images.length > 0) {
           setIsUploading(true);
           
@@ -115,11 +115,11 @@ const EditAnnoncePage = () => {
           await annonceService.uploadImages(id, formData);
         }
         
-        toast.success('Annonce mise à jour avec succès');
+        toast.success('Annonce mise Ã  jour avec succÃ¨s');
         navigate(`/dashboard/annonces/${id}`);
       } catch (error) {
-        console.error('Erreur lors de la mise à jour de l\'annonce:', error);
-        toast.error(error.message || 'Erreur lors de la mise à jour de l\'annonce');
+        console.error('Erreur lors de la mise Ã  jour de l\'annonce:', error);
+        toast.error(error.message || 'Erreur lors de la mise Ã  jour de l\'annonce');
       } finally {
         setLoading(false);
         setIsUploading(false);
@@ -127,7 +127,7 @@ const EditAnnoncePage = () => {
     }
   });
 
-  // Charger les données de l'annonce
+  // Charger les donnÃ©es de l'annonce
   useEffect(() => {
     const fetchAnnonce = async () => {
       try {
@@ -136,9 +136,9 @@ const EditAnnoncePage = () => {
         const response = await apiClient.get(`/annonces/${id}`);
         const annonceData = response.data.data;
         
-        // Vérifier si l'annonce peut être modifiée
+        // VÃ©rifier si l'annonce peut Ãªtre modifiÃ©e
         if (annonceData.statut !== 'disponible') {
-          toast.error('Cette annonce ne peut plus être modifiée');
+          toast.error('Cette annonce ne peut plus Ãªtre modifiÃ©e');
           navigate(`/dashboard/annonces/${id}`);
           return;
         }
@@ -166,7 +166,7 @@ const EditAnnoncePage = () => {
           instructionsSpeciales: annonceData.instructionsSpeciales || ''
         });
         
-        // Récupérer les images existantes
+        // RÃ©cupÃ©rer les images existantes
         if (annonceData.images && annonceData.images.length > 0) {
           setExistingImages(annonceData.images);
         }
@@ -174,7 +174,7 @@ const EditAnnoncePage = () => {
         setError(null);
       } catch (err) {
         console.error('Erreur lors du chargement de l\'annonce:', err);
-        setError('Impossible de charger les détails de l\'annonce');
+        setError('Impossible de charger les dÃ©tails de l\'annonce');
         toast.error('Erreur lors du chargement de l\'annonce');
       } finally {
         setAnnonceLoading(false);
@@ -191,7 +191,7 @@ const EditAnnoncePage = () => {
     },
     maxSize: 5242880, // 5MB
     onDrop: (acceptedFiles) => {
-      // Créer des prévisualisations pour les images acceptées
+      // CrÃ©er des prÃ©visualisations pour les images acceptÃ©es
       const newImages = acceptedFiles.map(file =>
         Object.assign(file, {
           preview: URL.createObjectURL(file)
@@ -225,7 +225,7 @@ const EditAnnoncePage = () => {
       await apiClient.delete(`/annonces/${id}/images/${imageId}`);
       
       setExistingImages(existingImages.filter(img => img._id !== imageId));
-      toast.success('Image supprimée avec succès');
+      toast.success('Image supprimÃ©e avec succÃ¨s');
     } catch (error) {
       console.error('Erreur lors de la suppression de l\'image:', error);
       toast.error('Erreur lors de la suppression de l\'image');
@@ -238,7 +238,7 @@ const EditAnnoncePage = () => {
       setLoading(true);
       await annonceService.deleteAnnonce(id);
       
-      toast.success('Annonce supprimée avec succès');
+      toast.success('Annonce supprimÃ©e avec succÃ¨s');
       navigate('/dashboard/annonces');
     } catch (error) {
       console.error('Erreur lors de la suppression de l\'annonce:', error);
@@ -249,10 +249,10 @@ const EditAnnoncePage = () => {
     }
   };
 
-  // Nettoyer les URL de prévisualisation lors du démontage du composant
+  // Nettoyer les URL de prÃ©visualisation lors du dÃ©montage du composant
   React.useEffect(() => {
     return () => {
-      // Nettoyer les URL de prévisualisation
+      // Nettoyer les URL de prÃ©visualisation
       images.forEach(image => URL.revokeObjectURL(image.preview));
     };
   }, [images]);
@@ -268,7 +268,7 @@ const EditAnnoncePage = () => {
     );
   }
 
-  // Afficher un message d'erreur si le chargement a échoué
+  // Afficher un message d'erreur si le chargement a Ã©chouÃ©
   if (error) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -283,7 +283,7 @@ const EditAnnoncePage = () => {
                   to="/dashboard/annonces"
                   variant="primary"
                 >
-                  Retour à mes annonces
+                  Retour Ã  mes annonces
                 </Button>
               </div>
             </div>
@@ -301,7 +301,7 @@ const EditAnnoncePage = () => {
             Modifier l'annonce
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Mettez à jour votre demande de transport
+            Mettez Ã  jour votre demande de transport
           </p>
         </div>
         <div className="mt-4 flex md:mt-0 md:ml-4">
@@ -334,7 +334,7 @@ const EditAnnoncePage = () => {
                   name="titre"
                   type="text"
                   label="Titre de l'annonce"
-                  placeholder="Ex: Transport de meuble Paris-Lyon"
+                  placeholder="Ex: Transport de meuble Casablanca-Rabat"
                   value={formik.values.titre}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
@@ -362,7 +362,7 @@ const EditAnnoncePage = () => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                   >
-                    <option value="">Sélectionner un type</option>
+                    <option value="">SÃ©lectionner un type</option>
                     {Object.entries(TYPE_TRANSPORT_LABELS).map(([value, label]) => (
                       <option key={value} value={value}>
                         {label}
@@ -375,14 +375,14 @@ const EditAnnoncePage = () => {
                 )}
               </div>
 
-              {/* Ville de départ */}
+              {/* Ville de dÃ©part */}
               <div className="sm:col-span-3">
                 <Input
                   id="villeDepart"
                   name="villeDepart"
                   type="text"
-                  label="Ville de départ"
-                  placeholder="Ex: Paris"
+                  label="Ville de dÃ©part"
+                  placeholder="Ex: Casablanca"
                   value={formik.values.villeDepart}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
@@ -393,14 +393,14 @@ const EditAnnoncePage = () => {
                 />
               </div>
 
-              {/* Ville d'arrivée */}
+              {/* Ville d'arrivÃ©e */}
               <div className="sm:col-span-3">
                 <Input
                   id="villeArrivee"
                   name="villeArrivee"
                   type="text"
-                  label="Ville d'arrivée"
-                  placeholder="Ex: Lyon"
+                  label="Ville d'arrivÃ©e"
+                  placeholder="Ex: Rabat"
                   value={formik.values.villeArrivee}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
@@ -411,13 +411,13 @@ const EditAnnoncePage = () => {
                 />
               </div>
 
-              {/* Date de départ */}
+              {/* Date de dÃ©part */}
               <div className="sm:col-span-3">
                 <Input
                   id="dateDepart"
                   name="dateDepart"
                   type="date"
-                  label="Date de départ"
+                  label="Date de dÃ©part"
                   value={formik.values.dateDepart}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
@@ -457,7 +457,7 @@ const EditAnnoncePage = () => {
                     name="volume"
                     type="number"
                     step="0.1"
-                    label="Volume (m³)"
+                    label="Volume (mÂ³)"
                     placeholder="Ex: 2.5"
                     value={formik.values.volume}
                     onChange={formik.handleChange}
@@ -486,14 +486,14 @@ const EditAnnoncePage = () => {
                 />
               </div>
 
-              {/* Valeur déclarée (optionnel) */}
+              {/* Valeur dÃ©clarÃ©e (optionnel) */}
               <div className="sm:col-span-3">
                 <Input
                   id="valeurDeclaree"
                   name="valeurDeclaree"
                   type="number"
                   step="0.01"
-                  label="Valeur déclarée (€) (optionnel)"
+                  label="Valeur dÃ©clarÃ©e (DH) (optionnel)"
                   placeholder="Ex: 500"
                   value={formik.values.valeurDeclaree}
                   onChange={formik.handleChange}
@@ -504,7 +504,7 @@ const EditAnnoncePage = () => {
                 />
               </div>
 
-              {/* Case à cocher pour les demandes urgentes */}
+              {/* Case Ã  cocher pour les demandes urgentes */}
               <div className="sm:col-span-6">
                 <div className="relative flex items-start">
                   <div className="flex items-center h-5">
@@ -522,7 +522,7 @@ const EditAnnoncePage = () => {
                       Demande urgente
                     </label>
                     <p className="text-gray-500">
-                      Cochez cette case si votre demande est urgente et nécessite une attention particulière.
+                      Cochez cette case si votre demande est urgente et nÃ©cessite une attention particuliÃ¨re.
                     </p>
                   </div>
                 </div>
@@ -539,24 +539,24 @@ const EditAnnoncePage = () => {
                     name="description"
                     rows={6}
                     className="shadow-sm focus:ring-teal-500 focus:border-teal-500 block w-full sm:text-sm border border-gray-300 rounded-md"
-                    placeholder="Décrivez en détail ce que vous souhaitez transporter, les conditions particulières, etc."
+                    placeholder="DÃ©crivez en dÃ©tail ce que vous souhaitez transporter, les conditions particuliÃ¨res, etc."
                     value={formik.values.description}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                   />
                 </div>
                 <p className="mt-2 text-sm text-gray-500">
-                  {formik.values.description.length}/1000 caractères
+                  {formik.values.description.length}/1000 caractÃ¨res
                 </p>
                 {formik.touched.description && formik.errors.description && (
                   <p className="mt-2 text-sm text-red-600">{formik.errors.description}</p>
                 )}
               </div>
 
-              {/* Instructions spéciales (optionnel) */}
+              {/* Instructions spÃ©ciales (optionnel) */}
               <div className="sm:col-span-6">
                 <label htmlFor="instructionsSpeciales" className="block text-sm font-medium text-gray-700">
-                  Instructions spéciales (optionnel)
+                  Instructions spÃ©ciales (optionnel)
                 </label>
                 <div className="mt-1">
                   <textarea
@@ -564,7 +564,7 @@ const EditAnnoncePage = () => {
                     name="instructionsSpeciales"
                     rows={3}
                     className="shadow-sm focus:ring-teal-500 focus:border-teal-500 block w-full sm:text-sm border border-gray-300 rounded-md"
-                    placeholder="Informations supplémentaires pour le transporteur (accès, horaires, etc.)"
+                    placeholder="Informations supplÃ©mentaires pour le transporteur (accÃ¨s, horaires, etc.)"
                     value={formik.values.instructionsSpeciales}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
@@ -615,18 +615,18 @@ const EditAnnoncePage = () => {
                         htmlFor="file-upload"
                         className="relative cursor-pointer bg-white rounded-md font-medium text-teal-600 hover:text-teal-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-teal-500"
                       >
-                        <span>Télécharger des images</span>
+                        <span>TÃ©lÃ©charger des images</span>
                         <input {...getInputProps()} />
                       </label>
-                      <p className="pl-1">ou glissez-déposez</p>
+                      <p className="pl-1">ou glissez-dÃ©posez</p>
                     </div>
                     <p className="text-xs text-gray-500">
-                      PNG, JPG, JPEG jusqu'à 5MB
+                      PNG, JPG, JPEG jusqu'Ã  5MB
                     </p>
                   </div>
                 </div>
                 
-                {/* Prévisualisation des nouvelles images */}
+                {/* PrÃ©visualisation des nouvelles images */}
                 {images.length > 0 && (
                   <div className="mt-4">
                     <h4 className="text-sm font-medium text-gray-700">
@@ -638,7 +638,7 @@ const EditAnnoncePage = () => {
                           <div className="aspect-w-1 aspect-h-1 rounded-lg bg-gray-100 overflow-hidden">
                             <img
                               src={image.preview}
-                              alt={`Aperçu ${index + 1}`}
+                              alt={`AperÃ§u ${index + 1}`}
                               className="object-cover"
                             />
                             <button
@@ -677,7 +677,7 @@ const EditAnnoncePage = () => {
             isLoading={loading || isUploading}
             disabled={loading || isUploading}
           >
-            {isUploading ? `Téléchargement (${uploadProgress}%)` : loading ? 'Mise à jour...' : 'Enregistrer les modifications'}
+            {isUploading ? `TÃ©lÃ©chargement (${uploadProgress}%)` : loading ? 'Mise Ã  jour...' : 'Enregistrer les modifications'}
           </Button>
         </div>
       </form>
@@ -704,7 +704,7 @@ const EditAnnoncePage = () => {
                     </h3>
                     <div className="mt-2">
                       <p className="text-sm text-gray-500">
-                        Etes-vous sûr de vouloir supprimer cette annonce ? Cette action est irréversible.
+                        ÃŠtes-vous sÃ»r de vouloir supprimer cette annonce ? Cette action est irrÃ©versible.
                       </p>
                     </div>
                   </div>

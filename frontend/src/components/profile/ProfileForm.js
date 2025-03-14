@@ -51,7 +51,7 @@ const ProfileForm = ({ initialValues = null, onSuccess }) => {
       rue: Yup.string().required('L\'adresse est requise'),
       codePostal: Yup.string()
         .required('Le code postal est requis')
-        .matches(/^[0-9]{5}$/, 'Code postal invalide'),
+        .matches(/^[0-9]{5}$/, 'Code postal invalide (5 chiffres)'),
       ville: Yup.string().required('La ville est requise'),
       pays: Yup.string().required('Le pays est requis'),
     }),
@@ -91,7 +91,7 @@ const ProfileForm = ({ initialValues = null, onSuccess }) => {
         rue: '',
         codePostal: '',
         ville: '',
-        pays: 'France',
+        pays: 'Maroc',
       },
       // Champs spécifiques aux transporteurs
       ...(user.role === 'transporteur' ? {

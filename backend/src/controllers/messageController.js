@@ -5,6 +5,7 @@ const Annonce = require('../models/Annonce');
 const User = require('../models/User');
 const path = require('path');
 const fs = require('fs');
+const NotificationService = require('../services/notificationService');
 
 // @desc    Envoyer un nouveau message
 // @route   POST /api/messages
@@ -55,6 +56,19 @@ exports.sendMessage = async (req, res) => {
       .populate('expediteur', 'nom prenom email photo')
       .populate('destinataire', 'nom prenom email photo')
       .populate('annonce', 'titre villeDepart villeArrivee');
+    
+    // Envoyer une notification au destinataire
+    try {
+      const expediteur = await User.findById(req.user.id);
+      await NotificationService.createMessageNotification(
+        destinataire,
+        'Nouveau message',
+        `Vous avez reçu un nouveau message de ${expediteur.prenom} ${expediteur.nom} concernant l'annonce "${annonceExists.titre}"`,
+        message._id
+      );
+    } catch (notifError) {
+      console.error('Erreur lors de l\'envoi de la notification de nouveau message:', notifError);
+    }
     
     res.status(201).json({
       success: true,
@@ -133,6 +147,21 @@ exports.sendMessageWithAttachments = async (req, res) => {
       .populate('expediteur', 'nom prenom email photo')
       .populate('destinataire', 'nom prenom email photo')
       .populate('annonce', 'titre villeDepart villeArrivee');
+    
+    // Envoyer une notification au destinataire
+    try {
+      const expediteur = await User.findById(req.user.id);
+      const annonceExists = await Annonce.findById(annonce);
+      
+      await NotificationService.createMessageNotification(
+        destinataire,
+        'Nouveau message avec pièce jointe',
+        `Vous avez reçu un nouveau message avec pièce jointe de ${expediteur.prenom} ${expediteur.nom} concernant l'annonce "${annonceExists.titre}"`,
+        message._id
+      );
+    } catch (notifError) {
+      console.error('Erreur lors de l\'envoi de la notification de nouveau message avec pièce jointe:', notifError);
+    }
     
     res.status(201).json({
       success: true,

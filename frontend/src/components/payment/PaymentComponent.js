@@ -180,7 +180,7 @@ const PaymentComponent = ({ devisId, montant, onPaymentComplete }) => {
       <div className="bg-gray-50 rounded-md p-4 mb-6">
         <div className="flex justify-between items-center">
           <span className="text-gray-600">Montant à payer :</span>
-          <span className="text-xl font-bold">{montant.toFixed(2)} €</span>
+          <span className="text-xl font-bold">{montant.toFixed(2)} DH</span>
         </div>
       </div>
 
@@ -395,13 +395,13 @@ const PaymentComponent = ({ devisId, montant, onPaymentComplete }) => {
               <strong>Instructions pour le virement bancaire :</strong>
             </p>
             <p className="text-blue-700 mb-1">
-              Titulaire du compte : Pro-Trans SAS
+              Titulaire du compte : Pro-Trans SARL
             </p>
             <p className="text-blue-700 mb-1">
-              IBAN : FR76 1234 5678 9012 3456 7890 123
+              RIB : 181 810 21111 4002770 00056 89
             </p>
             <p className="text-blue-700 mb-1">
-              BIC : ABCDEFGH
+              Banque : Attijariwafa Bank
             </p>
             <p className="text-blue-700 mb-1">
               Motif : Transport {devisId}

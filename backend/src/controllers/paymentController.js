@@ -1040,67 +1040,67 @@ const generateInvoicePDF = async (factureId) => {
       
       // Transport de base
       doc.text('Transport', tableLeft, tableRow);
-      doc.text(`${(detailTarifs.prixTransport / 1.2).toFixed(2)} €`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
+      doc.text(`${(detailTarifs.prixTransport / 1.2).toFixed(2)} DH`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
       tableRow += 20;
       
       // Options supplémentaires
       if (detailTarifs.fraisChargement > 0) {
         doc.text('Frais de chargement', tableLeft, tableRow);
-        doc.text(`${(detailTarifs.fraisChargement / 1.2).toFixed(2)} €`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
+        doc.text(`${(detailTarifs.fraisChargement / 1.2).toFixed(2)} DH`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
         tableRow += 20;
       }
       
       if (detailTarifs.fraisDechargement > 0) {
         doc.text('Frais de déchargement', tableLeft, tableRow);
-        doc.text(`${(detailTarifs.fraisDechargement / 1.2).toFixed(2)} €`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
+        doc.text(`${(detailTarifs.fraisDechargement / 1.2).toFixed(2)} DH`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
         tableRow += 20;
       }
       
       if (detailTarifs.fraisMontage > 0) {
         doc.text('Frais de montage', tableLeft, tableRow);
-        doc.text(`${(detailTarifs.fraisMontage / 1.2).toFixed(2)} €`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
+        doc.text(`${(detailTarifs.fraisMontage / 1.2).toFixed(2)} DH`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
         tableRow += 20;
       }
       
       if (detailTarifs.fraisDemontage > 0) {
         doc.text('Frais de démontage', tableLeft, tableRow);
-        doc.text(`${(detailTarifs.fraisDemontage / 1.2).toFixed(2)} €`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
+        doc.text(`${(detailTarifs.fraisDemontage / 1.2).toFixed(2)} DH`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
         tableRow += 20;
       }
       
       if (detailTarifs.fraisEmballage > 0) {
         doc.text('Frais d\'emballage', tableLeft, tableRow);
-        doc.text(`${(detailTarifs.fraisEmballage / 1.2).toFixed(2)} €`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
+        doc.text(`${(detailTarifs.fraisEmballage / 1.2).toFixed(2)} DH`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
         tableRow += 20;
       }
       
       if (detailTarifs.fraisAssurance > 0) {
         doc.text('Frais d\'assurance', tableLeft, tableRow);
-        doc.text(`${(detailTarifs.fraisAssurance / 1.2).toFixed(2)} €`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
+        doc.text(`${(detailTarifs.fraisAssurance / 1.2).toFixed(2)} DH`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
         tableRow += 20;
       }
       
       if (detailTarifs.fraisUrgence > 0) {
         doc.text('Frais d\'urgence', tableLeft, tableRow);
-        doc.text(`${(detailTarifs.fraisUrgence / 1.2).toFixed(2)} €`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
+        doc.text(`${(detailTarifs.fraisUrgence / 1.2).toFixed(2)} DH`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
         tableRow += 20;
       }
       
       if (detailTarifs.autresFrais > 0) {
         doc.text('Autres frais', tableLeft, tableRow);
-        doc.text(`${(detailTarifs.autresFrais / 1.2).toFixed(2)} €`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
+        doc.text(`${(detailTarifs.autresFrais / 1.2).toFixed(2)} DH`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
         tableRow += 20;
       }
       
       if (detailTarifs.remise > 0) {
         doc.text('Remise', tableLeft, tableRow);
-        doc.text(`-${(detailTarifs.remise / 1.2).toFixed(2)} €`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
+        doc.text(`-${(detailTarifs.remise / 1.2).toFixed(2)} DH`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
         tableRow += 20;
       }
     } else {
       // Si pas de détails, afficher le montant total HT directement
       doc.text('Transport', tableLeft, tableRow);
-      doc.text(`${facture.montantHT.toFixed(2)} €`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
+      doc.text(`${facture.montantHT.toFixed(2)} DH`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
       tableRow += 20;
     }
     
@@ -1111,18 +1111,18 @@ const generateInvoicePDF = async (factureId) => {
     
     // Total HT
     doc.text('Total HT', tableLeft, tableRow);
-    doc.text(`${facture.montantHT.toFixed(2)} €`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
+    doc.text(`${facture.montantHT.toFixed(2)} DH`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
     tableRow += 20;
     
     // TVA
     doc.text(`TVA (${facture.tauxTVA}%)`, tableLeft, tableRow);
-    doc.text(`${facture.montantTVA.toFixed(2)} €`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
+    doc.text(`${facture.montantTVA.toFixed(2)} DH`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
     tableRow += 20;
     
     // Total TTC
     doc.fontSize(12).font('Helvetica-Bold');
     doc.text('Total TTC', tableLeft, tableRow);
-    doc.text(`${facture.montantTTC.toFixed(2)} €`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
+    doc.text(`${facture.montantTTC.toFixed(2)} DH`, tableLeft + 300, tableRow, { width: 80, align: 'right' });
     
     // Pied de page
     doc.fontSize(10).font('Helvetica');

@@ -128,7 +128,7 @@ exports.sendNewQuoteEmail = async (email, name, annonce, devis, transporteur) =>
       <div style="background-color: #f7f7f7; padding: 15px; border-radius: 5px; margin: 20px 0;">
         <h3 style="margin-top: 0; color: #333;">Détails du devis</h3>
         <p><strong>Transporteur :</strong> ${transporteur.prenom} ${transporteur.nom}</p>
-        <p><strong>Montant :</strong> ${devis.montant} €</p>
+        <p><strong>Montant :</strong> ${devis.montant} DH</p>
         <p><strong>Délai de livraison :</strong> ${new Date(devis.delaiLivraison).toLocaleDateString('fr-FR')}</p>
         <p><strong>Message :</strong> ${devis.message}</p>
       </div>
@@ -146,7 +146,7 @@ exports.sendNewQuoteEmail = async (email, name, annonce, devis, transporteur) =>
     to: email,
     subject: `Pro-Trans - Nouveau devis pour votre annonce "${annonce.titre}"`,
     html,
-    text: `Bonjour ${name}, vous avez reçu un nouveau devis de ${transporteur.prenom} ${transporteur.nom} pour votre annonce "${annonce.titre}". Montant : ${devis.montant} €. Délai de livraison : ${new Date(devis.delaiLivraison).toLocaleDateString('fr-FR')}. Connectez-vous à votre compte pour voir les détails.`
+    text: `Bonjour ${name}, vous avez reçu un nouveau devis de ${transporteur.prenom} ${transporteur.nom} pour votre annonce "${annonce.titre}". Montant : ${devis.montant} DH. Délai de livraison : ${new Date(devis.delaiLivraison).toLocaleDateString('fr-FR')}. Connectez-vous à votre compte pour voir les détails.`
   });
 };
 
@@ -174,7 +174,7 @@ exports.sendQuoteAcceptedEmail = async (email, name, annonce, devis, client) => 
         <p><strong>De :</strong> ${annonce.villeDepart}</p>
         <p><strong>À :</strong> ${annonce.villeArrivee}</p>
         <p><strong>Date de départ :</strong> ${new Date(annonce.dateDepart).toLocaleDateString('fr-FR')}</p>
-        <p><strong>Montant :</strong> ${devis.montant} €</p>
+        <p><strong>Montant :</strong> ${devis.montant} DH</p>
         <p><strong>Délai de livraison prévu :</strong> ${new Date(devis.delaiLivraison).toLocaleDateString('fr-FR')}</p>
       </div>
       <div style="text-align: center; margin: 30px 0;">
@@ -214,7 +214,7 @@ exports.sendPaymentConfirmationEmail = async (email, name, annonce, payment) => 
       <p>Nous vous confirmons que votre paiement pour l'annonce "${annonce.titre}" a bien été reçu et traité.</p>
       <div style="background-color: #f7f7f7; padding: 15px; border-radius: 5px; margin: 20px 0;">
         <h3 style="margin-top: 0; color: #333;">Détails du paiement</h3>
-        <p><strong>Montant :</strong> ${payment.amount} €</p>
+        <p><strong>Montant :</strong> ${payment.amount} DH</p>
         <p><strong>Date :</strong> ${new Date(payment.date).toLocaleDateString('fr-FR')}</p>
         <p><strong>Référence :</strong> ${payment.reference}</p>
         <p><strong>Moyen de paiement :</strong> ${payment.method === 'card' ? 'Carte bancaire' : payment.method === 'virement' ? 'Virement bancaire' : 'PayPal'}</p>
@@ -233,7 +233,7 @@ exports.sendPaymentConfirmationEmail = async (email, name, annonce, payment) => 
     to: email,
     subject: 'Pro-Trans - Confirmation de paiement',
     html,
-    text: `Bonjour ${name}, nous vous confirmons que votre paiement de ${payment.amount} € pour l'annonce "${annonce.titre}" a bien été reçu et traité. Référence : ${payment.reference}.`
+    text: `Bonjour ${name}, nous vous confirmons que votre paiement de ${payment.amount} DH pour l'annonce "${annonce.titre}" a bien été reçu et traité. Référence : ${payment.reference}.`
   });
 };
 

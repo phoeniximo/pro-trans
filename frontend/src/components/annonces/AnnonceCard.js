@@ -63,7 +63,7 @@ const AnnonceCard = ({ annonce, isDashboard = false, isDetailed = false }) => {
         <div className="flex justify-between items-center mb-4">
           {annonce.budget ? (
             <div className="text-xl font-bold text-teal-600">
-              {annonce.budget} €
+              {annonce.budget} DH
             </div>
           ) : (
             <div className="text-sm text-gray-500">

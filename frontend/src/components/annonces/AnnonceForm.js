@@ -322,7 +322,7 @@ const AnnonceForm = ({ initialValues = null, mode = 'create', onSuccess }) => {
                 id="budget"
                 name="budget"
                 type="number"
-                label="Budget (€)"
+                label="Budget (DH)"
                 placeholder="Budget estimé (optionnel)"
                 value={formik.values.budget}
                 onChange={formik.handleChange}

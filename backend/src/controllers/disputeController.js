@@ -6,6 +6,7 @@ const User = require('../models/User');
 const Paiement = require('../models/Paiement');
 const { sendEmail } = require('../utils/emailService');
 const logger = require('../utils/logger');
+const NotificationService = require('../services/notificationService');
 
 // @desc    Créer un nouveau litige
 // @route   POST /api/disputes
@@ -77,6 +78,35 @@ exports.createDispute = async (req, res) => {
       .populate('transporteur', 'nom prenom email')
       .populate('annonce', 'titre villeDepart villeArrivee');
     
+    // Créer une notification pour l'autre partie
+    try {
+      const destinataireId = isClient ? transporteur : client;
+      const initiateur = isClient ? 'client' : 'transporteur';
+      
+      await NotificationService.createDisputeNotification(
+        destinataireId,
+        'Nouveau litige ouvert',
+        `Un litige a été ouvert par le ${initiateur} concernant l'annonce "${annonce.titre}". Motif: ${typeProbleme}`,
+        dispute._id
+      );
+      
+      // Notifier également l'administration
+      // Cette partie dépendra de votre structure, par exemple si vous avez des utilisateurs avec un rôle 'admin'
+      const admins = await User.find({ role: 'admin' }).select('_id');
+      if (admins && admins.length > 0) {
+        await NotificationService.notifyMany(
+          admins.map(admin => admin._id),
+          'Nouveau litige à traiter',
+          `Un litige a été ouvert entre un client et un transporteur concernant l'annonce "${annonce.titre}". Motif: ${typeProbleme}`,
+          'nouveau_litige',
+          dispute._id,
+          'Dispute'
+        );
+      }
+    } catch (notifError) {
+      logger.error('Erreur lors de l\'envoi des notifications de litige:', notifError);
+    }
+    
     // Envoyer un email de notification à l'autre partie
     try {
       const destinataire = isClient ? await User.findById(transporteur) : annonce.utilisateur;
@@ -93,7 +123,7 @@ exports.createDispute = async (req, res) => {
               <p><strong>Titre du litige :</strong> ${titre}</p>
               <p><strong>Type de problème :</strong> ${typeProbleme}</p>
               <p><strong>Description :</strong> ${description}</p>
-              ${montantReclame ? `<p><strong>Montant réclamé :</strong> ${montantReclame} €</p>` : ''}
+              ${montantReclame ? `<p><strong>Montant réclamé :</strong> ${montantReclame} DH</p>` : ''}
             </div>
             <p>Veuillez vous connecter à votre compte pour résoudre ce litige à l'amiable ou fournir des informations supplémentaires.</p>
             <p>L'équipe Pro-Trans</p>
@@ -252,7 +282,9 @@ exports.addMessage = async (req, res) => {
     }
     
     // Récupérer le litige
-    const dispute = await Dispute.findById(id);
+    const dispute = await Dispute.findById(id)
+      .populate('client', 'nom prenom email')
+      .populate('transporteur', 'nom prenom email');
     
     if (!dispute) {
       return res.status(404).json({
@@ -262,8 +294,8 @@ exports.addMessage = async (req, res) => {
     }
     
     // Vérifier si l'utilisateur est impliqué dans ce litige
-    const isClient = dispute.client.toString() === req.user.id;
-    const isTransporteur = dispute.transporteur.toString() === req.user.id;
+    const isClient = dispute.client._id.toString() === req.user.id;
+    const isTransporteur = dispute.transporteur._id.toString() === req.user.id;
     const isAdmin = req.user.role === 'admin';
     
     if (!isClient && !isTransporteur && !isAdmin) {
@@ -288,17 +320,57 @@ exports.addMessage = async (req, res) => {
       .populate('transporteur', 'nom prenom email photo')
       .populate('messages.expediteur', 'nom prenom photo');
     
+    // Créer des notifications
+    try {
+      const expediteur = await User.findById(req.user.id);
+      const expediteurRole = isClient ? 'client' : isTransporteur ? 'transporteur' : 'administrateur';
+      
+      // Notifier l'autre partie
+      if (isClient) {
+        await NotificationService.createDisputeNotification(
+          dispute.transporteur._id,
+          'Nouveau message dans un litige',
+          `${expediteur.prenom} ${expediteur.nom} a envoyé un nouveau message dans le litige concernant l'annonce "${dispute.annonce.titre}"`,
+          dispute._id
+        );
+      } else if (isTransporteur) {
+        await NotificationService.createDisputeNotification(
+          dispute.client._id,
+          'Nouveau message dans un litige',
+          `${expediteur.prenom} ${expediteur.nom} a envoyé un nouveau message dans le litige concernant l'annonce "${dispute.annonce.titre}"`,
+          dispute._id
+        );
+      } else if (isAdmin) {
+        // Notifier les deux parties
+        await NotificationService.createDisputeNotification(
+          dispute.client._id,
+          'Nouveau message de l\'administrateur',
+          `Un administrateur a envoyé un nouveau message dans le litige concernant l'annonce "${dispute.annonce.titre}"`,
+          dispute._id
+        );
+        
+        await NotificationService.createDisputeNotification(
+          dispute.transporteur._id,
+          'Nouveau message de l\'administrateur',
+          `Un administrateur a envoyé un nouveau message dans le litige concernant l'annonce "${dispute.annonce.titre}"`,
+          dispute._id
+        );
+      }
+    } catch (notifError) {
+      logger.error('Erreur lors de l\'envoi des notifications de message de litige:', notifError);
+    }
+    
     // Envoyer un email de notification à l'autre partie
     try {
       let destinataire;
       if (isClient) {
-        destinataire = await User.findById(dispute.transporteur);
+        destinataire = await User.findById(dispute.transporteur._id);
       } else if (isTransporteur) {
-        destinataire = await User.findById(dispute.client);
+        destinataire = await User.findById(dispute.client._id);
       } else if (isAdmin) {
         // Notifier les deux parties
-        const client = await User.findById(dispute.client);
-        const transporteur = await User.findById(dispute.transporteur);
+        const client = await User.findById(dispute.client._id);
+        const transporteur = await User.findById(dispute.transporteur._id);
         
         await Promise.all([
           sendEmail({
@@ -397,7 +469,10 @@ exports.resolveDispute = async (req, res) => {
     }
     
     // Récupérer le litige
-    const dispute = await Dispute.findById(id);
+    const dispute = await Dispute.findById(id)
+      .populate('client', 'nom prenom email')
+      .populate('transporteur', 'nom prenom email')
+      .populate('annonce', 'titre');
     
     if (!dispute) {
       return res.status(404).json({
@@ -407,8 +482,8 @@ exports.resolveDispute = async (req, res) => {
     }
     
     // Vérifier si l'utilisateur est impliqué dans ce litige ou est admin
-    const isClient = dispute.client.toString() === req.user.id;
-    const isTransporteur = dispute.transporteur.toString() === req.user.id;
+    const isClient = dispute.client._id.toString() === req.user.id;
+    const isTransporteur = dispute.transporteur._id.toString() === req.user.id;
     const isAdmin = req.user.role === 'admin';
     
     if (!isClient && !isTransporteur && !isAdmin) {
@@ -459,10 +534,45 @@ exports.resolveDispute = async (req, res) => {
       .populate('transporteur', 'nom prenom email photo')
       .populate('annonce', 'titre');
     
+    // Créer des notifications pour les parties concernées
+    try {
+      const expediteur = await User.findById(req.user.id);
+      const expediteurRole = isClient ? 'client' : isTransporteur ? 'transporteur' : 'administrateur';
+      
+      // Notifier les deux parties
+      if (isAdmin) {
+        await NotificationService.createDisputeNotification(
+          dispute.client._id,
+          'Litige résolu par l\'administrateur',
+          `L'administrateur a résolu le litige concernant l'annonce "${dispute.annonce.titre}". Résolution: ${resolution}`,
+          dispute._id
+        );
+        
+        await NotificationService.createDisputeNotification(
+          dispute.transporteur._id,
+          'Litige résolu par l\'administrateur',
+          `L'administrateur a résolu le litige concernant l'annonce "${dispute.annonce.titre}". Résolution: ${resolution}`,
+          dispute._id
+        );
+      } else {
+        // Si c'est une partie qui a initié la résolution
+        const autrePartieId = isClient ? dispute.transporteur._id : dispute.client._id;
+        
+        await NotificationService.createDisputeNotification(
+          autrePartieId,
+          'Proposition de résolution du litige',
+          `${expediteur.prenom} ${expediteur.nom} a proposé une résolution du litige concernant l'annonce "${dispute.annonce.titre}". Résolution: ${resolution}`,
+          dispute._id
+        );
+      }
+    } catch (notifError) {
+      logger.error('Erreur lors de l\'envoi des notifications de résolution de litige:', notifError);
+    }
+    
     // Envoyer des emails de notification
     try {
-      const client = await User.findById(dispute.client);
-      const transporteur = await User.findById(dispute.transporteur);
+      const client = await User.findById(dispute.client._id);
+      const transporteur = await User.findById(dispute.transporteur._id);
       
       await Promise.all([
         sendEmail({
@@ -475,7 +585,7 @@ exports.resolveDispute = async (req, res) => {
               <p>Le litige concernant l'annonce "${disputeResolved.annonce.titre}" a été résolu.</p>
               <div style="background-color: #f5f5f5; padding: 15px; margin: 15px 0; border-radius: 5px;">
                 <p><strong>Résolution :</strong> ${resolution}</p>
-                ${montantRemboursement ? `<p><strong>Montant de remboursement :</strong> ${montantRemboursement} €</p>` : ''}
+                ${montantRemboursement ? `<p><strong>Montant de remboursement :</strong> ${montantRemboursement} DH</p>` : ''}
                 ${commentaire ? `<p><strong>Commentaire :</strong> ${commentaire}</p>` : ''}
               </div>
               <p>Merci d'avoir utilisé notre processus de résolution des litiges.</p>
@@ -493,7 +603,7 @@ exports.resolveDispute = async (req, res) => {
               <p>Le litige concernant l'annonce "${disputeResolved.annonce.titre}" a été résolu.</p>
               <div style="background-color: #f5f5f5; padding: 15px; margin: 15px 0; border-radius: 5px;">
                 <p><strong>Résolution :</strong> ${resolution}</p>
-                ${montantRemboursement ? `<p><strong>Montant de remboursement :</strong> ${montantRemboursement} €</p>` : ''}
+                ${montantRemboursement ? `<p><strong>Montant de remboursement :</strong> ${montantRemboursement} DH</p>` : ''}
                 ${commentaire ? `<p><strong>Commentaire :</strong> ${commentaire}</p>` : ''}
               </div>
               <p>Merci d'avoir utilisé notre processus de résolution des litiges.</p>
